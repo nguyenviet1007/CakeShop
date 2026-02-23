@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kế Hoạch Sản Xuất - Bakery Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { min-height: 100vh; background: #343a40; color: white; }
+        .sidebar a { color: #adb5bd; text-decoration: none; padding: 12px 20px; display: block; }
+        .sidebar a:hover, .sidebar a.active { background: #495057; color: #0d6efd; border-left: 3px solid #0d6efd; }
+        .card-plan { border: none; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); background: white; }
+        .summary-panel {
+            background-color: #e7f1ff; border: 1px solid #cff4fc;
+            border-radius: 8px; padding: 20px; position: sticky; top: 20px;
+        }
+        .qty-input { border: 2px solid #0d6efd; font-weight: bold; text-align: center; width: 80px; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block sidebar p-0">
+            <div class="p-4 text-center">
+                <i class="fa-solid fa-cake-candles fa-3x text-secondary mb-2"></i>
+                <h4 class="fw-bold">Bakery Admin</h4>
+            </div>
+            <hr class="mx-3">
+            <ul class="list-unstyled">
+                <li><a href="#"><i class="fa-solid fa-gauge me-2"></i> Tổng quan</a></li>
+                <li><a th:href="@{/admin/products}" class="active"><i class="fa-solid fa-wheat-awn me-2"></i> Sản phẩm</a></li>
+            </ul>
+        </nav>
+
+        <main class="col-md-10 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 fw-bold text-primary"><i class="fa-solid fa-clipboard-list me-2"></i>Lập Kế Hoạch Sản Xuất</h2>
+                <button class="btn btn-outline-secondary" onclick="history.back()">Quay lại</button>
+            </div>
+
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="card-plan p-4">
+                        <h5 class="mb-3 text-secondary border-bottom pb-2">1. Danh sách bánh hôm nay</h5>
+                        <form id="productionForm">
+                            <table class="table table-hover align-middle" id="cakeTable">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Loại bánh</th>
+                                    <th class="text-center">Số lượng làm</th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>
+                                        <select class="form-select fw-bold" onchange="reCalculate()">
+                                            <option selected disabled value="">-- Chọn bánh --</option>
+                                            <option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.name}"></option>
+                                        </select>
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" class="form-control qty-input d-inline-block" value="1" min="1" onchange="reCalculate()" onkeyup="reCalculate()">
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-outline-danger border-0 btn-sm" onclick="removeRow(this)">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-outline-primary border-dashed w-100 py-2" onclick="addRow()">
+                                    <i class="fa-solid fa-plus me-1"></i> Thêm loại bánh khác
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="summary-panel shadow-sm">
+                        <h5 class="mb-3 text-primary fw-bold"><i class="fa-solid fa-flask me-2"></i>2. Tổng nguyên liệu cần</h5>
+                        <p class="small text-muted mb-3">Hệ thống đã cộng dồn công thức của tất cả các bánh bên trái.</p>
+
+                        <div class="table-responsive bg-white rounded p-2 mb-3 border">
+                            <table class="table table-sm table-borderless mb-0">
+                                <thead class="text-muted small border-bottom">
+                                <tr>
+                                    <th>Nguyên liệu</th>
+                                    <th class="text-end">Cần dùng</th>
+                                    <th class="text-end">Trong kho</th>
+                                    <th class="text-center">TT</th>
+                                </tr>
+                                </thead>
+                                <tbody id="summaryBody">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="stockAlert" class="alert alert-danger align-items-center p-2 mb-3" style="display: none;">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                            <div class="small fw-bold ms-1">Kho không đủ đáp ứng kế hoạch này!</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-secondary disabled" type="button" id="btnSubmitPlan">
+                                <i class="fa-solid fa-ban me-2"></i>Chưa có dữ liệu
+                            </button>
+
+                            <a th:href="@{/admin/ingredients}" class="btn btn-outline-primary btn-sm mt-2">
+                                <i class="fa-solid fa-truck-moving me-1"></i> Đi đến kho nguyên liệu
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="productOptions" style="display: none;">
+    <option selected disabled value="">-- Chọn bánh --</option>
+    <option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.name}"></option>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    // ==========================================
+    // 1. NHẬN DỮ LIỆU TỪ SPRING BOOT
+    // ==========================================
+    const khoNguyenLieu = /*[[${khoNguyenLieuJson}]]*/ {};
+    const congThuc = /*[[${congThucJson}]]*/ {};
+
+    // Biến toàn cục để lưu trữ dữ liệu tính toán, dùng cho lúc gọi API
+    let tongNguyenLieuCanToanCuc = {};
+
+    // ==========================================
+    // 2. LOGIC TÍNH TOÁN REAL-TIME
+    // ==========================================
+    function reCalculate() {
+        let tongNguyenLieuCan = {};
+        let danhSachBanh = document.querySelectorAll('#cakeTable tbody tr');
+
+        // Biến để kiểm tra trùng lặp
+        let danhSachDaChon = new Set();
+        let biTrungBanh = false;
+
+        danhSachBanh.forEach(dong => {
+            let selectElem = dong.querySelector('select');
+            let inputElem = dong.querySelector('input');
+
+            let maBanh = selectElem ? selectElem.value : null;
+
+            // ==========================================
+            // VALIDATE 1: SỐ LƯỢNG PHẢI LÀ SỐ TỰ NHIÊN > 0
+            // ==========================================
+            let rawValue = inputElem.value;
+            // Ép kiểu về số nguyên, loại bỏ số thập phân
+            let soLuong = parseInt(rawValue, 10);
+
+            // Nếu nhập tào lao (chữ, số âm, số 0, hoặc có dấu chấm thập phân) -> Tự động ép về 1
+            if (isNaN(soLuong) || soLuong < 1 || rawValue.includes('.') || rawValue.includes(',')) {
+                soLuong = 1;
+                inputElem.value = 1; // Cập nhật lại luôn trên ô input cho người dùng thấy
+            }
+
+            if (maBanh) {
+                // ==========================================
+                // VALIDATE 2: KHÔNG CHỌN TRÙNG BÁNH
+                // ==========================================
+                if (danhSachDaChon.has(maBanh)) {
+                    biTrungBanh = true;
+                    // Bôi đỏ viền ô select bị trùng (dùng class của Bootstrap)
+                    selectElem.classList.add('is-invalid');
+                } else {
+                    danhSachDaChon.add(maBanh);
+                    selectElem.classList.remove('is-invalid');
+                }
+
+                // Vẫn tiếp tục tính toán cộng dồn công thức
+                if (congThuc[maBanh] && soLuong > 0) {
+                    congThuc[maBanh].forEach(thanhPhan => {
+                        let maNL = thanhPhan.maNL;
+                        if (!tongNguyenLieuCan[maNL]) tongNguyenLieuCan[maNL] = 0;
+                        tongNguyenLieuCan[maNL] += thanhPhan.dinhLuong * soLuong;
+                    });
+                }
+            }
+        });
+
+        tongNguyenLieuCanToanCuc = tongNguyenLieuCan;
+
+        let hopCanhBao = document.getElementById('stockAlert');
+        let nutXuatKho = document.getElementById('btnSubmitPlan');
+
+        // ==========================================
+        // XỬ LÝ GIAO DIỆN NẾU BỊ TRÙNG BÁNH
+        // ==========================================
+        if (biTrungBanh) {
+            document.getElementById('summaryBody').innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-danger py-4">
+                        <i class="fa-solid fa-triangle-exclamation fa-2x mb-2"></i><br>
+                        <strong>Lỗi: Có loại bánh đang bị chọn trùng lặp!</strong><br>
+                        <small>Vui lòng gộp số lượng lại thành 1 dòng hoặc xóa dòng thừa.</small>
+                    </td>
+                </tr>`;
+            hopCanhBao.style.display = 'none';
+            nutXuatKho.className = 'btn btn-secondary disabled';
+            nutXuatKho.innerHTML = '<i class="fa-solid fa-ban me-2"></i>Lỗi trùng bánh';
+            nutXuatKho.disabled = true;
+            return; // Ngắt luôn hàm, không chạy phần kiểm tra tồn kho bên dưới nữa
+        }
+
+        // ==========================================
+        // NẾU HỢP LỆ THÌ CHẠY BÌNH THƯỜNG (Giữ nguyên code cũ của bạn)
+        // ==========================================
+        let HTMLBangTongHop = '';
+        let duNguyenLieu = true;
+        let coDuLieu = false;
+
+        for (let maNL in tongNguyenLieuCan) {
+            coDuLieu = true;
+            let canDung = tongNguyenLieuCan[maNL];
+            let thongTinKho = khoNguyenLieu[maNL] || { ten: 'Không rõ', tonKho: 0, donVi: '' };
+            let tonKho = thongTinKho.tonKho;
+
+            let thieuHang = canDung > tonKho;
+            if (thieuHang) duNguyenLieu = false;
+
+            HTMLBangTongHop += `
+                <tr class="${thieuHang ? 'bg-danger bg-opacity-10 rounded' : ''}">
+                    <td class="fw-bold ${thieuHang ? 'text-danger' : ''}">${thongTinKho.ten}</td>
+                    <td class="text-end fw-bold ${thieuHang ? 'text-danger' : 'text-primary'}">
+                        ${canDung.toFixed(2)} ${thongTinKho.donVi}
+                    </td>
+                    <td class="text-end ${thieuHang ? 'text-danger' : 'text-success'}">
+                        ${tonKho.toFixed(2)} ${thongTinKho.donVi}
+                    </td>
+                    <td class="text-center">
+                        ${thieuHang ? '<i class="fa-solid fa-circle-exclamation text-danger" title="Thiếu hàng"></i>' : '<i class="fa-solid fa-check-circle text-success" title="Đủ hàng"></i>'}
+                    </td>
+                </tr>
+            `;
+        }
+
+        document.getElementById('summaryBody').innerHTML = coDuLieu ? HTMLBangTongHop : '<tr><td colspan="4" class="text-center text-muted py-3">Hãy chọn bánh và nhập số lượng</td></tr>';
+
+        if (!coDuLieu) {
+            hopCanhBao.style.display = 'none';
+            nutXuatKho.className = 'btn btn-secondary disabled';
+            nutXuatKho.innerHTML = '<i class="fa-solid fa-ban me-2"></i>Chưa có dữ liệu';
+            nutXuatKho.disabled = true;
+        } else if (duNguyenLieu) {
+            hopCanhBao.style.display = 'none';
+            nutXuatKho.className = 'btn btn-success';
+            nutXuatKho.innerHTML = '<i class="fa-solid fa-check me-2"></i>Lưu Kế Hoạch & Xuất Kho';
+            nutXuatKho.disabled = false;
+        } else {
+            hopCanhBao.style.display = 'flex';
+            nutXuatKho.className = 'btn btn-secondary disabled';
+            nutXuatKho.innerHTML = '<i class="fa-solid fa-ban me-2"></i>Không đủ nguyên liệu';
+            nutXuatKho.disabled = true;
+        }
+    }
+
+    // Các hàm thêm/xóa dòng
+    function addRow() {
+        const optionsHtml = document.getElementById('productOptions').innerHTML;
+        const table = document.getElementById('cakeTable').getElementsByTagName('tbody')[0];
+        const newRow = table.insertRow();
+        newRow.innerHTML = `
+            <td><select class="form-select fw-bold" onchange="reCalculate()">${optionsHtml}</select></td>
+            <td class="text-center"><input type="number" class="form-control qty-input d-inline-block" value="1" min="1" onchange="reCalculate()" onkeyup="reCalculate()"></td>
+            <td class="text-end"><button type="button" class="btn btn-outline-danger border-0 btn-sm" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button></td>
+        `;
+    }
+
+    function removeRow(btn) {
+        const table = document.getElementById('cakeTable').getElementsByTagName('tbody')[0];
+        if (table.rows.length > 1) {
+            btn.closest('tr').remove();
+            reCalculate();
+        } else {
+            Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Phải có ít nhất một loại bánh!' });
+        }
+    }
+
+    // ========================================================
+    // 3. XỬ LÝ SỰ KIỆN BẤM NÚT LƯU & XUẤT KHO (PHẦN BỔ SUNG)
+    // ========================================================
+    document.getElementById('btnSubmitPlan').addEventListener('click', function() {
+        // Đóng gói dữ liệu thành List<IngredientDTO> để gửi sang Spring Boot
+        let exportList = [];
+        for (let maNL in tongNguyenLieuCanToanCuc) {
+            exportList.push({
+                ingredientId: maNL,
+                quantity: tongNguyenLieuCanToanCuc[maNL], // NOTE: Nếu DTO của bạn dùng 'quantity' thay vì 'amount', hãy đổi tên biến này lại nhé!
+                note: "Xuất kho tự động theo Kế hoạch làm bánh"
+            });
+        }
+
+        // Bật popup hỏi xác nhận
+        Swal.fire({
+            title: 'Xác nhận xuất kho?',
+            text: "Hệ thống sẽ trừ nguyên liệu và ghi vào Lịch sử xuất kho!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#198754', // Màu xanh lá
+            cancelButtonColor: '#6c757d', // Màu xám
+            confirmButtonText: 'Đồng ý xuất kho',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Gọi API xuất kho của Controller cũ
+                fetch('/admin/ingredients/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(exportList)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        Swal.fire('Thành công!', 'Đã xuất kho và lưu lịch sử.', 'success')
+                        .then(() => {
+                            // Xong thì đưa người dùng về trang Danh sách Nguyên liệu
+                            window.location.href = '/admin/ingredients';
+                        });
+                    } else {
+                        Swal.fire('Lỗi!', data.message || 'Có lỗi xảy ra', 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Lỗi kết nối!', 'Không thể gọi API Xuất kho', 'error');
+                    console.error('Error:', error);
+                });
+            }
+        });
+    });
+
+    // Chạy hàm tính toán ngay khi mở trang
+    window.onload = function() { reCalculate(); };
+</script>
+</body>
+</html>
