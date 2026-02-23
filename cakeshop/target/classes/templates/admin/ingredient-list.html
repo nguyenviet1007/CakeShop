@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nguyên Liệu - Bakery Admin</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .sidebar { min-height: 100vh; background: #343a40; color: white; }
+        .sidebar a { color: #adb5bd; text-decoration: none; padding: 12px 20px; display: block; border-left: 3px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background: #495057; color: #198754; border-left-color: #198754; }
+        .action-area {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .btn-big {
+            padding: 10px 25px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s;
+        }
+        .btn-big:hover { transform: translateY(-2px); }
+        .table-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .table thead th {
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+        }
+        .badge-stock-ok { background-color: #d1e7dd; color: #0f5132; }
+        .badge-stock-low { background-color: #fff3cd; color: #856404; }
+        .badge-stock-out { background-color: #f8d7da; color: #842029; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <nav th:replace="~{fragments/sidebar :: sidebar(activePage='ingredients')}"></nav>
+
+        <main class="col-md-10 ms-sm-auto col-lg-10 px-md-4 py-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 mb-0 text-gray-800">Kho Nguyên Liệu</h2>
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-2"> <form th:action="@{/admin/ingredients}" method="get" class="row g-2 align-items-center">
+
+                        <div class="col-12">
+                            <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+
+                                <input type="text" name="keyword" class="form-control border-start-0 ps-0"
+                                       placeholder="Tìm theo Tên hoặc ID..."
+                                       th:value="${keyword}">
+
+                                <select name="status" class="form-select" style="max-width: 200px; border-left: 1px solid #ced4da;">
+                                    <option value="all" th:selected="${status == 'all'}">-- Tất cả trạng thái --</option>
+                                    <option value="ok" th:selected="${status == 'ok'}"> Đủ hàng</option>
+                                    <option value="warning" th:selected="${status == 'warning'}"> Sắp hết (Cảnh báo)</option>
+                                    <option value="out" th:selected="${status == 'out'}"> Hết hàng</option>
+                                </select>
+
+                                <button type="submit" class="btn btn-primary px-4">
+                                    Tìm
+                                </button>
+
+                                <a th:if="${keyword != null or (status != null and status != 'all')}"
+                                   th:href="@{/admin/ingredients}"
+                                   class="btn btn-light border" title="Xóa lọc">
+                                    <i class="fa-solid fa-rotate-left text-secondary"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                    </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-area d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1 text-muted">Thao tác nhanh</h5>
+                    <small>Cập nhật số lượng tồn kho</small>
+                </div>
+
+                <div class="d-flex gap-3">
+
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-bars-progress me-2"></i> Nhập nguyên liệu
+                        </button>
+                        <ul class="dropdown-menu shadow">
+                            <li>
+                                <a class="dropdown-item py-2" href="javascript:void(0)" onclick="loadForm('add')">
+                                    <i class="fa-solid fa-plus text-primary me-2" style="width: 20px"></i>
+                                    Thêm nguyên liệu mới
+                                </a>
+                            </li>
+
+                            <li><hr class="dropdown-divider"></li>
+
+                            <li>
+                                <a class="dropdown-item py-2" th:href="@{/admin/ingredients/import}">
+                                    <i class="fa-solid fa-boxes-packing text-success me-2" style="width: 20px"></i>
+                                    Nhập hàng vào kho
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-dolly fa-lg"></i> Xuất nguyên liệu
+                        </button>
+                        <ul class="dropdown-menu shadow">
+                            <li>
+                                <a class="dropdown-item py-2 fw-bold text-primary" th:href="@{/admin/products/production-plan}">
+                                    <i class="fa-solid fa-cake-candles me-2" style="width: 20px"></i>
+                                    Xuất kho theo Mẻ bánh
+                                </a>
+                            </li>
+
+                            <li><hr class="dropdown-divider"></li>
+
+                            <li>
+                                <a class="dropdown-item py-2" th:href="@{/admin/ingredients/export}">
+                                    <i class="fa-solid fa-hand-holding-hand text-warning me-2" style="width: 20px"></i>
+                                    Xuất kho thủ công
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col" class="ps-3">ID</th>
+                            <th scope="col">Tên Nguyên Liệu</th>
+                            <th scope="col">Đơn vị</th>
+                            <th scope="col">Tồn kho</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col" class="text-end pe-4">Hành động</th>  <!-- Đổi tên cột Lịch sử thành Hành động -->
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="ing : ${ingredients}">
+                            <td class="ps-3 text-muted fw-bold" th:text="${ing.ingredientId}"></td>
+                            <td class="fw-bold" th:text="${ing.name}"></td>
+                            <td th:text="${ing.unit}"></td>
+                            <td>
+        <span class="fw-bold"
+              th:classappend="${ing.stock == null or ing.stock.quantity == 0} ? 'text-danger' : (${ing.stock.quantity < ing.stock.minQuantity} ? 'text-warning' : 'text-success')"
+              th:text="${ing.stock != null and ing.stock.quantity != null ? ing.stock.quantity : '0'}"></span>
+                            </td>
+                            <td>
+        <span class="badge"
+              th:classappend="${ing.stock == null or ing.stock.quantity == 0} ? 'badge-stock-out' : (${ing.stock.quantity < ing.stock.minQuantity} ? 'badge-stock-low' : 'badge-stock-ok')"
+              th:text="${ing.stock == null or ing.stock.quantity == 0} ? 'Hết hàng' : (${ing.stock.quantity < ing.stock.minQuantity} ? 'Sắp hết' : 'Đủ hàng')"></span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button type="button" class="btn btn-sm btn-warning me-2"
+                                        th:data-id="${ing.ingredientId}"
+                                        onclick="loadForm('edit', this.getAttribute('data-id'))">
+                                    <i class="fa-solid fa-pen-to-square"></i> Sửa
+                                </button>
+                                <button type="button" class="btn btn-sm btn-info me-2"
+                                        data-bs-toggle="modal" data-bs-target="#historyModal"
+                                        th:data-id="${ing.ingredientId}"
+                                        th:data-name="${ing.name}"
+                                        onclick="loadHistory(this.getAttribute('data-id'), this.getAttribute('data-name'))">
+                                    <i class="fa-solid fa-history"></i> Lịch sử
+                                </button>
+                                <a th:href="@{/admin/ingredients/delete/{id}(id=${ing.ingredientId})}" class="btn btn-sm btn-danger"
+                                   onclick="xoaNguyenLieu(event, this);">
+                                    <i class="fa-solid fa-trash"></i> Xóa
+                                </a>
+                            </td>
+                        </tr>
+                        <!-- Nếu không có nguyên liệu nào -->
+                        <tr th:if="${#lists.isEmpty(ingredients)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Chưa có nguyên liệu nào trong kho
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="mt-4 d-flex justify-content-center">
+                        <nav th:replace="~{fragments/pagination :: pagination(pageData=${ingredientPage}, link='/admin/ingredients')}">
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Modal Lịch sử -->
+<div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div id="historyModalContent">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-3">Đang tải lịch sử...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal add/edit -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" id="actionModalContent">
+        </div>
+    </div>
+</div>
+<!-- Script AJAX load full HTML từ file lịch sử -->
+<script>
+    function loadHistory(ingredientId, name) {
+
+        const content = document.getElementById('historyModalContent');
+
+        // Hiển thị loading
+        content.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3">Đang tải lịch sử...</p>
+            </div>
+        `;
+
+        // Gọi AJAX
+        fetch('/admin/ingredients/history/' + ingredientId)
+            .then(response => {
+                if (!response.ok) throw new Error('Lỗi tải');
+                return response.text();
+            })
+            .then(html => {
+                content.innerHTML = html; // Nhét HTML đã có sẵn Header và Tên vào modal
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                content.innerHTML = `
+                    <div class="text-center text-danger py-4">
+                        <i class="fa-solid fa-triangle-exclamation fa-2x mb-2"></i><br>
+                        Không thể tải dữ liệu.
+                    </div>
+                `;
+            });
+    }
+    <!-- Script AJAX load full HTML từ file form -->
+    function loadForm(type, id = null) {
+          const modalEl = document.getElementById('actionModal');
+          const modalContent = document.getElementById('actionModalContent');
+
+          // Khởi tạo Modal
+          let myModal = bootstrap.Modal.getInstance(modalEl);
+          if (!myModal) {
+              myModal = new bootstrap.Modal(modalEl);
+          }
+
+          // Hiển thị Loading
+          modalContent.innerHTML = `
+              <div class="p-5 text-center">
+                  <div class="spinner-border text-primary" role="status"></div>
+                  <p class="mt-3 text-muted">Đang tải dữ liệu...</p>
+              </div>
+          `;
+          myModal.show();
+
+          // Gọi AJAX lấy HTML form
+          let url = (type === 'add') ? '/admin/ingredients/modal/add' : '/admin/ingredients/modal/edit/' + id;
+
+          fetch(url)
+              .then(res => {
+                  if(!res.ok) throw new Error("Lỗi tải form");
+                  return res.text();
+              })
+              .then(html => {
+                  modalContent.innerHTML = html;
+              })
+              .catch(err => {
+                  console.error(err);
+                  modalContent.innerHTML = '<div class="alert alert-danger m-3">Lỗi tải dữ liệu!</div>';
+              });
+      }
+
+      // 2. Hàm Xử lý LƯU (Quan trọng nhất - Đây là cái bạn đang thiếu)
+      function submitModalForm() {
+          var form = document.getElementById('modalForm');
+          var errorDiv = document.getElementById('serverError');
+          var errorMsg = document.getElementById('serverErrorMessage');
+          var btnSave = document.querySelector('#modalFooterBtn'); // Nút lưu
+
+          // Validate Client (HTML5)
+          if (!form.checkValidity()) {
+              form.reportValidity();
+              form.classList.add('was-validated');
+              return;
+          }
+
+          // Hiệu ứng Loading
+          var originalText = btnSave.innerHTML;
+          btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+          btnSave.disabled = true;
+
+          // Gửi AJAX lên Server
+          var formData = new FormData(form);
+
+          fetch(form.action, {
+              method: 'POST',
+              body: formData
+          })
+          .then(response => response.json()) // Đọc JSON từ Controller
+          .then(data => {
+              if (data.status === 'success') {
+                  // THÀNH CÔNG: Reload trang
+                  window.location.reload();
+              } else {
+                  // CÓ LỖI (Trùng tên...): Hiện thông báo
+                  if(errorDiv) {
+                      errorDiv.classList.remove('d-none');
+                      errorMsg.textContent = data.message;
+                  } else {
+                      alert(data.message); // Fallback nếu không tìm thấy div lỗi
+                  }
+
+                  // Trả lại nút bấm
+                  btnSave.innerHTML = originalText;
+                  btnSave.disabled = false;
+              }
+          })
+          .catch(error => {
+              console.error('Error:', error);
+              if(errorDiv) {
+                  errorDiv.classList.remove('d-none');
+                  errorMsg.textContent = "Lỗi kết nối server!";
+              }
+              btnSave.innerHTML = originalText;
+              btnSave.disabled = false;
+          });
+      }
+</script>
+<script th:inline="javascript">
+    // 1. HÀM HIỂN THỊ POPUP XÁC NHẬN XÓA
+    function xoaNguyenLieu(event, element) {
+        event.preventDefault(); // Chặn hành động chuyển trang ngay lập tức
+        const urlXoa = element.getAttribute('href');
+
+        Swal.fire({
+            title: 'Bạn có chắc chắn?',
+            text: "Nguyên liệu và toàn bộ lịch sử xuất/nhập của nó sẽ bị xóa vĩnh viễn!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545', // Màu đỏ danger
+            cancelButtonColor: '#6c757d', // Màu xám secondary
+            confirmButtonText: '<i class="fa-solid fa-trash"></i> Vâng, xóa nó!',
+            cancelButtonText: 'Hủy bỏ'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Nếu người dùng đồng ý, trình duyệt mới bắt đầu gọi link Xóa
+                window.location.href = urlXoa;
+            }
+        });
+    }
+
+    // 2. BẮT THÔNG BÁO THÀNH CÔNG/THẤT BẠI TỪ CONTROLLER
+    document.addEventListener("DOMContentLoaded", function() {
+        var successMessage = /*[[${success}]]*/ null;
+        var errorMessage = /*[[${error}]]*/ null;
+
+        // Nếu Controller gửi về success -> Hiện popup Toast xịn xò
+        if (successMessage) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: successMessage,
+                toast: true,               // Bật chế độ thu nhỏ
+                position: 'top-end',       // Góc trên cùng bên phải
+                showConfirmButton: false,  // Ẩn nút OK
+                timer: 3000,               // Tự tắt sau 3 giây
+                timerProgressBar: true     // Thanh chạy thời gian
+            });
+        }
+
+        // Nếu Controller gửi về error -> Hiện popup báo lỗi màu đỏ
+        if (errorMessage) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Không thể xóa!',
+                text: errorMessage,
+                confirmButtonColor: '#dc3545'
+            });
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</body>
+</html>

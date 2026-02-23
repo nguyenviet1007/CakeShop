@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm / Sửa sản phẩm - Bakery Admin</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #ffc107;
+            --primary-hover: #e0a800;
+            --body-bg: #f4f6f9;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        body {
+            background-color: var(--body-bg);
+            font-family: 'Poppins', sans-serif;
+            color: #495057;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            border: none;
+            box-shadow: var(--card-shadow);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .form-title {
+            font-weight: 600;
+            color: #343a40;
+            border-left: 5px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            border: 1px solid #dee2e6;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.15);
+            border-color: var(--primary-color);
+        }
+
+        .btn-save {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-save:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-back {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+            font-weight: 500;
+            padding: 10px 25px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            background-color: #e9ecef;
+            color: #343a40;
+        }
+
+        .invalid-feedback {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+        }
+
+        /* Style riêng cho dòng công thức */
+        .recipe-row {
+            transition: background-color 0.2s;
+        }
+        .recipe-row:hover {
+            background-color: #fff9db !important;
+        }
+    </style>
+</head>
+<body>
+
+<<div class="container">
+    <div class="form-card">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="form-title mb-0">
+                <span th:text="${product.productId == null ? 'Thêm Mới Sản Phẩm' : 'Cập Nhật Sản Phẩm'}">Thông tin sản phẩm</span>
+            </h3>
+            <span th:if="${product.productId != null}" class="badge bg-light text-secondary border">
+                ID: <span th:text="${product.productId}"></span>
+            </span>
+        </div>
+
+        <form th:action="@{/admin/products/save}"
+              th:object="${product}"
+              method="post"
+              enctype="multipart/form-data"
+              id="productForm"
+              onsubmit="return gomDuLieuNguyenLieu()">
+
+            <input type="hidden" th:field="*{productId}"/>
+
+            <input type="hidden" id="recipesJson" name="recipesJson" />
+
+            <div class="mb-4">
+                <label for="name" class="form-label">
+                    <i class="fa-solid fa-cake-candles me-1 text-warning"></i> Tên bánh
+                </label>
+                <input id="name" type="text" class="form-control" th:field="*{name}" placeholder="Ví dụ: Bánh Tiramisu...">
+                <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <label for="category" class="form-label">
+                        <i class="fa-solid fa-tags me-1 text-warning"></i> Loại bánh
+                    </label>
+                    <input id="category" type="text" class="form-control" th:field="*{category}" placeholder="Nhập loại...">
+                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <label for="price" class="form-label">
+                        <i class="fa-solid fa-money-bill-wave me-1 text-warning"></i> Giá bán (VNĐ)
+                    </label>
+                    <div class="input-group">
+                        <input id="price" type="number" step="0.01" class="form-control" th:field="*{price}" placeholder="0">
+                        <span class="input-group-text bg-white text-muted">đ</span>
+                    </div>
+                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="description" class="form-label">
+                    <i class="fa-solid fa-align-left me-1 text-warning"></i> Mô tả chi tiết
+                </label>
+                <textarea id="description" class="form-control" rows="4" th:field="*{description}" placeholder="Mô tả thành phần, hương vị..."></textarea>
+            </div>
+
+            <div class="mb-4 border rounded p-3 bg-light">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <label class="form-label fw-bold h6 mb-0 text-dark">
+                        <i class="fa-solid fa-flask text-warning me-2"></i>Công thức (Định lượng cho 1 cái)
+                    </label>
+                    <button type="button" class="btn btn-sm btn-outline-primary bg-white" onclick="addIngredientRow()">
+                        <i class="fa-solid fa-plus"></i> Thêm nguyên liệu
+                    </button>
+                </div>
+
+                <div id="recipe-container">
+                    <div th:each="recipe, itemStat : *{recipes}" class="row mb-2 recipe-row align-items-center mx-0 p-1 rounded">
+                        <div class="col-md-6 mb-1 mb-md-0">
+                            <select class="form-select">
+                                <option value="">-- Chọn nguyên liệu --</option>
+                                <option th:each="ing : ${allIngredients}"
+                                        th:value="${ing.ingredientId}"
+                                        th:text="${ing.name} + ' (' + ${ing.unit} + ')'"
+                                        th:selected="${ing.ingredientId == recipe.ingredient.ingredientId}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-5 mb-1 mb-md-0">
+                            <div class="input-group">
+                                <input type="number" step="0.0001" class="form-control"
+                                       th:value="${recipe.amount}" placeholder="Số lượng">
+                                <span class="input-group-text bg-white text-muted small">kg/lít</span>
+                            </div>
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removeRow(this)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <small class="text-muted fst-italic ms-1" style="font-size: 0.8rem;">
+                    * Lưu ý: Nhập định lượng theo đơn vị chuẩn (VD: 0.2 kg = 200g).
+                </small>
+            </div>
+
+            <div class="mb-4">
+                <label for="imageFiles" class="form-label">
+                    <i class="fa-solid fa-image me-1 text-warning"></i> Hình ảnh sản phẩm (Chọn nhiều file)
+                </label>
+                <input id="imageFiles" name="imageFiles" type="file" class="form-control" accept="image/*" multiple>
+
+                <div th:if="${product.productId != null and !#lists.isEmpty(product.images)}" class="mt-3">
+                    <p class="small text-muted mb-2">Ảnh hiện tại (Chọn ảnh chính và xóa nếu cần):</p>
+                    <div class="row">
+                        <div th:each="image, iter : ${product.images}" class="col-md-4 mb-3">
+                            <div class="card border-0 shadow-sm">
+                                <img th:src="${image.imageUrl}" class="card-img-top" style="height: 150px; object-fit: cover; border-radius: 8px;">
+                                <div class="card-body p-2 text-center">
+                                    <div class="form-check">
+                                        <input type="radio" th:name="mainImageId" th:value="${image.imageId}" th:checked="${image.isMain}" class="form-check-input">
+                                        <label class="form-check-label small">Ảnh chính</label>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" name="deleteImageIds" th:value="${image.imageId}" class="form-check-input">
+                                        <label class="form-check-label small text-danger">Xóa ảnh này</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4 text-muted" style="opacity: 0.1">
+
+            <div class="d-flex justify-content-end gap-2">
+                <a th:href="@{/admin/products}" class="btn btn-back">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                </a>
+                <button type="submit" class="btn btn-save">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Lưu thôngợp tin
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="recipe-template" style="display: none;">
+    <div class="row mb-2 recipe-row align-items-center mx-0 p-1 rounded">
+        <div class="col-md-6 mb-1 mb-md-0">
+            <select class="form-select">
+                <option value="">-- Chọn nguyên liệu --</option>
+                <option th:each="ing : ${allIngredients}"
+                        th:value="${ing.ingredientId}"
+                        th:text="${ing.name}"></option>
+            </select>
+        </div>
+        <div class="col-md-5 mb-1 mb-md-0">
+            <div class="input-group">
+                <input type="number" step="0.0001" class="form-control" placeholder="0.0">
+                <span class="input-group-text bg-white text-muted small">kg/lít</span>
+            </div>
+        </div>
+        <div class="col-md-1 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removeRow(this)">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('ingredient-list');
+        const addButton = document.getElementById('add-ingredient-btn'); // ID nút thêm của bạn
+
+        // Lấy danh sách nguyên liệu từ server render ra biến JS để dùng cho dòng mới
+        // Lưu ý: Cách này hơi thủ công nhưng chạy ổn định với Thymeleaf
+        // Bạn cần render list options ẩn ở đâu đó hoặc dùng Ajax,
+        // nhưng để nhanh thì bạn copy đoạn HTML <select> mẫu như sau:
+    });
+
+    function addIngredientRow() {
+        const container = document.getElementById('recipe-container');
+        const template = document.getElementById('recipe-template').innerHTML;
+        const newDiv = document.createElement('div');
+        newDiv.innerHTML = template;
+        container.appendChild(newDiv.firstElementChild);
+    }
+
+    function removeRow(button) {
+        button.closest('.recipe-row').remove();
+    }
+
+    // LOGIC GOM DỮ LIỆU
+    // LOGIC GOM DỮ LIỆU
+function gomDuLieuNguyenLieu() {
+    let danhSachRecipe = [];
+    let rows = document.querySelectorAll('.recipe-row');
+    let seenIngredients = new Set();
+
+    for (let i = 0; i < rows.length; i++) {
+        let row = rows[i];
+        let selectElem = row.querySelector('select');
+        let amountElem = row.querySelector('input[type="number"]');
+
+        if (selectElem && amountElem) {
+            let ingId = selectElem.value;
+            let amt = amountElem.value;
+
+            if (ingId && amt) {
+                // --- VALIDATE FRONTEND BẰNG SWEETALERT2 ---
+
+                // 1. Kiểm tra > 0
+                if (parseFloat(amt) <= 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Định lượng không hợp lệ',
+                        text: 'Vui lòng nhập số lượng nguyên liệu lớn hơn 0 nhé!',
+                        confirmButtonText: 'Đã hiểu',
+                        confirmButtonColor: '#f39c12' // Màu cam warning
+                    }).then(() => {
+                        amountElem.focus(); // Đợi người dùng tắt popup rồi mới focus
+                    });
+                    return false; // Chặn submit
+                }
+
+                // 2. Kiểm tra trùng
+                if (seenIngredients.has(ingId)) {
+                    // Lấy tên nguyên liệu bị trùng để báo lỗi cho trực quan
+                    let ingName = selectElem.options[selectElem.selectedIndex].text;
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Trùng lặp nguyên liệu',
+                        html: `Bạn đã chọn <b>${ingName}</b> nhiều lần.<br>Vui lòng gộp số lượng lại thành 1 dòng nhé!`,
+                        confirmButtonText: 'Sửa ngay',
+                        confirmButtonColor: '#dc3545' // Màu đỏ danger
+                    }).then(() => {
+                        selectElem.focus();
+                    });
+                    return false; // Chặn submit
+                }
+                seenIngredients.add(ingId);
+                // ------------------------------------------
+
+                danhSachRecipe.push({
+                    ingredient: { ingredientId: parseInt(ingId) },
+                    amount: parseFloat(amt)
+                });
+            }
+
+            selectElem.removeAttribute('name');
+            amountElem.removeAttribute('name');
+        }
+    }
+
+    document.getElementById('recipesJson').value = JSON.stringify(danhSachRecipe);
+    return true;
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

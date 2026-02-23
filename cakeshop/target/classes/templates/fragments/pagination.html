@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<nav th:fragment="pagination(pageData, link)" aria-label="Page navigation"
+     th:if="${pageData.totalPages > 1}">
+
+    <ul class="pagination justify-content-center">
+
+        <li class="page-item" th:classappend="${pageData.first} ? 'disabled'">
+            <a class="page-link"
+               th:href="@{${link}(page=${pageData.number - 1}, keyword=${keyword}, category=${category}, status=${status})}">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+        </li>
+
+        <li class="page-item"
+            th:each="i : ${#numbers.sequence(0, pageData.totalPages - 1)}"
+            th:classappend="${i == pageData.number} ? 'active'">
+
+            <a class="page-link"
+               th:text="${i + 1}"
+               th:href="@{${link}(page=${i}, keyword=${keyword}, category=${category}, status=${status})}">
+            </a>
+        </li>
+
+        <li class="page-item" th:classappend="${pageData.last} ? 'disabled'">
+            <a class="page-link"
+               th:href="@{${link}(page=${pageData.number + 1}, keyword=${keyword}, category=${category}, status=${status})}">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+
+    <div class="text-center text-muted small mt-2">
+        Hiển thị <span th:text="${pageData.numberOfElements}"></span> /
+        <span th:text="${pageData.totalElements}"></span> kết quả
+    </div>
+</nav>
+
+</body>
+</html>
