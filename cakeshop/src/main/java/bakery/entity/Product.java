@@ -29,7 +29,10 @@ public class Product {
 
     @NotBlank(message = "Loại bánh không được để trống")
     @Size(max = 100, message = "Loại bánh không được vượt quá 100 ký tự")
-    private String category;
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
+
 
     @NotNull(message = "Giá bán không được để trống")
     @DecimalMin(value = "999.0", inclusive = false, message = "Giá bán phải lớn hơn 1000")
@@ -69,5 +72,9 @@ public class Product {
 
     public void setRecipes(List<Recipe> recipes) {
         this.recipes = recipes;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
     }
 }

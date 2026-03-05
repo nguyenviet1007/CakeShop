@@ -1,7 +1,9 @@
-package com.example.demo.model;
+package bakery.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "Order_Detail")
@@ -19,6 +21,6 @@ public class OrderDetail {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    private Double price;
+    private BigDecimal price;
     private Integer quantity;
 }

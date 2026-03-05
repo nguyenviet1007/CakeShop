@@ -19,5 +19,3 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // 3. Tìm kết hợp Tên + Loại + Phân trang (Mới thêm)
     Page<Product> findByNameContainingIgnoreCaseAndCategory(String name, String category, Pageable pageable);
 }
-
-

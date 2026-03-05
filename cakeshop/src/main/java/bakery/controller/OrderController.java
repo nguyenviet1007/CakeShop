@@ -1,42 +1,93 @@
 package bakery.controller;
 
-import bakery.model.Order;
-import bakery.service.OrderService;
+import bakery.entity.Cart;
+import bakery.entity.User;
+import bakery.service.CartServiceImpl;
+import bakery.service.OrderServiceImpl;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/order")
 public class OrderController {
 
     @Autowired
-    private OrderService orderService;
+    private CartServiceImpl cartService;
 
-    @GetMapping("/orders")
-    public String viewHomePage(Model model) {
-        model.addAttribute("listOrders", orderService.getAllOrders());
-        model.addAttribute("order", new Order());
-        return "templates/home";
+    @Autowired
+    private OrderServiceImpl orderService; // Đảm bảo bạn đã tạo Service này
+
+    /**
+     * Bước 1: Tạo thông tin thanh toán và QR Code
+     */
+    @PostMapping("/checkout")
+    public ResponseEntity<?> createPayment(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(401).body("Vui lòng đăng nhập để thanh toán.");
+        }
+
+        List<Cart> cartItems = cartService.findByUserId(user.getId());
+        if (cartItems.isEmpty()) {
+            return ResponseEntity.badRequest().body("Giỏ hàng của bạn đang trống.");
+        }
+
+        // Tính tổng tiền (ép kiểu long để tránh lỗi double như bạn gặp phải)
+        BigDecimal totalAmount = cartItems.stream()
+                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Thông tin ngân hàng của bạn
+        String bankId = "MB";
+        String accountNo = "0395551381"; // Thay bằng STK thật
+        String accountName = "NGUYEN VAN A";
+        String orderInfo = "DH" + System.currentTimeMillis(); // Mã đơn hàng tạm thời
+
+        // Tạo URL VietQR
+        String qrUrl = String.format("https://img.vietqr.io/image/%s-%s-compact2.png?amount=%d&addInfo=%s&accountName=%s",
+                bankId, accountNo, totalAmount, orderInfo, accountName);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("qrUrl", qrUrl);
+        response.put("total", totalAmount);
+        response.put("orderInfo", orderInfo);
+
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/save")
-    public String saveOrder(@ModelAttribute("order") Order order) {
-        orderService.saveOrder(order);
-        return "redirect:/orders";
-    }
+    /**
+     * Bước 2: Xác nhận đã chuyển khoản thành công
+     * Thực hiện: Lưu đơn hàng thật và Xóa giỏ hàng
+     */
+    @PostMapping("/confirm")
+    @Transactional
+    public ResponseEntity<?> confirmOrder(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) return ResponseEntity.status(401).build();
 
-    @GetMapping("/edit/{id}")
-    public String showFormForUpdate(@PathVariable(value = "id") Long id, Model model) {
-        Order order = orderService.getOrderById(id);
-        model.addAttribute("order", order);
-        model.addAttribute("listOrders", orderService.getAllOrders());
-        return "home";
-    }
+        List<Cart> cartItems = cartService.findByUserId(user.getId());
+        if (cartItems.isEmpty()) return ResponseEntity.badRequest().body("Không có gì để xác nhận.");
 
-    @GetMapping("/delete/{id}")
-    public String deleteOrder(@PathVariable(value = "id") Long id) {
-        orderService.deleteOrder(id);
-        return "redirect:/";
+        try {
+            // 1. Lưu đơn hàng vào Database (Gọi qua Service)
+            orderService.saveOrder(user, cartItems);
+
+            // 2. Xóa sạch giỏ hàng của người dùng
+            cartService.clearCart(user.getId());
+
+            return ResponseEntity.ok("Đơn hàng đã được ghi nhận thành công!");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi hệ thống: " + e.getMessage());
+        }
     }
 }
