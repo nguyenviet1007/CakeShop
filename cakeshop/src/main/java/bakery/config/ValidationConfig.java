@@ -1,4 +1,4 @@
-package config;
+package bakery.config;
 
 import org.hibernate.validator.HibernateValidator;
 import org.hibernate.validator.cfg.GenericConstraintDef;

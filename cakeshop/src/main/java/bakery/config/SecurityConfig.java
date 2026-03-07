@@ -1,4 +1,4 @@
-package config;
+package bakery.config;
 
 import bakery.controller.OAuth2LoginSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    @Bean
-    public OAuth2LoginSuccessHandler successHandler() {
-        return new OAuth2LoginSuccessHandler();
-    }
+
     @Autowired
     private OAuth2LoginSuccessHandler successHandler;
 
@@ -23,13 +20,14 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/css/**", "/js/**", "/img/**",
-                                "/static/**","/api/cart/checkout", "/api/cart/confirm",
-                                "/api/order/**","/api/order/confirm","/home",
-                                "/login",
-                                "/products",
-                                "/products/form",
-                                "/details").permitAll()
+                        // Cho phép tất cả các đường dẫn cơ bản và tài nguyên tĩnh
+                        .requestMatchers("/", "/login", "/register", "/error").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/img/**", "/static/**", "/webjars/**").permitAll()
+
+                        // Cho phép API giỏ hàng và đơn hàng (để thực hiện test/thanh toán)
+                        .requestMatchers("/api/cart/**", "/api/order/**").permitAll()
+
+                        // Các yêu cầu khác mới cần đăng nhập
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
