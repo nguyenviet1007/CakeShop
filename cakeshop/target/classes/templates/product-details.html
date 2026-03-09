@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${product.name}">Product Detail</title>
+    <link rel="stylesheet" th:href="@{/css/detail_css.css}">
+</head>
+<body>
+<div th:fragment="productDetail">
+    <div class="product-detail-container">
+        <!-- LEFT: IMAGE -->
+        <div class="gallery">
+            <img id="main-image"
+                 th:src="@{/img/{img}(img=${product.images[0].imageUrl})}"
+                 class="main-image"/>
+            <div class="thumbnail-list">
+                <img th:each="img : ${product.images}"
+                     th:src="@{/img/{img}(img=${img.imageUrl})}"
+                     class="thumbnail"
+                     onclick="changeImage(this)">
+            </div>
+        </div>
+        <!-- RIGHT: PRODUCT INFO -->
+        <div class="product-info">
+            <div class="product-title"
+                 th:text="${product.name}">
+                Cake Name
+            </div>
+            <div class="rating">
+                ⭐ 4.5 (1.3K Reviews)
+            </div>
+            <h2 class="price">
+                ₹<span th:text="${product.price}"></span>
+            </h2>
+            <p th:text="${product.description}"></p>
+            <div class="description"
+                 th:text="${product.description}">
+                This signature specialty cake boasts a moist chocolate base, decadent chocolate ganache topping, & adorned with an abundance of luscious choco chips, adding a delightful crunch to each bite.
+            </div>
+            <h3>Select Weight</h3>
+            <div class="weight-options">
+                <button>0.5 Kg</button>
+                <button>1 Kg</button>
+                <button>1.5 Kg</button>
+                <button>2 Kg</button>
+            </div>
+            <h3>Cake Message</h3>
+            <input type="text" placeholder="Write A Sweet Wish!">
+            <p>⏱ Earliest Delivery: 2-3 Hrs</p>
+            <button class="buy-btn">
+                Buy Now | VND <span th:text="${product.price}"></span>
+            </button>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/script.js}"></script>
+</body>
+</html>

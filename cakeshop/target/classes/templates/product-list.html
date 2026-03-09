@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Sản Phẩm - Bakery Admin</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #ffc107; /* Màu vàng đặc trưng Bakery */
+            --primary-hover: #e0a800;
+            --sidebar-bg: #212529;
+            --body-bg: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--body-bg);
+            font-family: 'Poppins', sans-serif;
+            color: #495057;
+        }
+.sidebar { min-height: 100vh; background: #343a40; color: white; }
+    .sidebar a { color: #adb5bd; text-decoration: none; padding: 12px 20px; display: block; border-left: 3px solid transparent; }
+    .sidebar a:hover, .sidebar a.active { background: #495057; color: #198754; border-left-color: #198754; }
+
+        /* MAIN CONTENT */
+        main { padding-bottom: 3rem; }
+
+        /* CARDS & PANELS */
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            margin-bottom: 25px;
+            border: none;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            padding: 0.6rem 1rem;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        /* BUTTONS */
+        .btn-theme {
+            background-color: var(--primary-color);
+            color: #fff;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(255, 193, 7, 0.25);
+        }
+
+        .btn-theme:hover {
+            background-color: var(--primary-hover);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* TABLE STYLES */
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            border: none;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background-color: #f1f3f5;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            padding: 1rem;
+            border-bottom: none;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .product-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #343a40;
+            font-size: 1rem;
+        }
+
+        .badge-category {
+            background-color: #fff8e1;
+            color: #d97706;
+            border: 1px solid #fcd34d;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        .price-tag {
+            font-weight: 700;
+            color: #212529;
+            font-size: 1.1rem;
+        }
+
+        /* ACTIONS */
+        .action-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5px;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-edit { background: #e3f2fd; color: #0d6efd; }
+        .btn-edit:hover { background: #0d6efd; color: white; }
+
+        .btn-delete { background: #ffebee; color: #dc3545; }
+        .btn-delete:hover { background: #dc3545; color: white; }
+
+        /* Responsive Fix */
+        @media (max-width: 768px) {
+            .filter-row > div { margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <nav th:replace="~{fragments/sidebar :: sidebar(activePage='products')}"></nav>
+        <main class="col-md-10 px-md-4 py-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">Sản Phẩm</h2>
+                    <p class="text-muted mb-0">Quản lý danh sách bánh trong cửa hàng</p>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="text-end me-3 d-none d-sm-block">
+                        <span class="d-block fw-bold text-dark">Admin</span>
+                        <small class="text-muted">online</small>
+                    </div>
+                    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 45px; height: 45px;">
+                        AD
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <form method="get" th:action="@{/admin/products}" class="row align-items-end filter-row">
+
+                    <div class="col-md-2 col-6">
+                        <label class="form-label text-muted small fw-bold mb-1">ID</label>
+                        <input type="text" class="form-control" name="id" th:value="${param.id}" placeholder="Mã...">
+                    </div>
+
+                    <div class="col-md-3 col-6">
+                        <label class="form-label text-muted small fw-bold mb-1">Tên bánh</label>
+                        <input type="text" class="form-control" name="keyword" th:value="${param.keyword}" placeholder="Nhập tên bánh...">
+                    </div>
+
+                    <div class="col-md-2 col-6">
+                        <label class="form-label text-muted small fw-bold mb-1">Danh mục</label>
+                        <select class="form-select" name="category">
+                            <option value="">Tất cả</option>
+                            <option value="Bánh Kem" th:selected="${param.category == 'Bánh Kem'}">Bánh Kem</option>
+                            <option value="Bánh Mì" th:selected="${param.category == 'Bánh Mì'}">Bánh Mì</option>
+                            <option value="Cookie" th:selected="${param.category == 'Cookie'}">Cookie</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 col-6">
+                        <label class="form-label text-muted small fw-bold mb-1">Sắp xếp</label>
+                        <select class="form-select" name="sort">
+                            <option value="">Mới nhất</option>
+                            <option value="price_asc" th:selected="${param.sort == 'price_asc'}">Giá thấp lên cao</option>
+                            <option value="price_desc" th:selected="${param.sort == 'price_desc'}">Giá cao xuống thấp</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex gap-2 justify-content-md-end mt-3 mt-md-0">
+                        <button class="btn btn-light border fw-bold text-secondary" type="submit">
+                            <i class="fa-solid fa-filter"></i> Lọc
+                        </button>
+                        <a th:href="@{/admin/products/add}" class="btn btn-theme">
+                            <i class="fa-solid fa-plus me-1"></i> Thêm mới
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Thông tin sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Giá bán</th>
+                            <th class="text-end pe-4">Hành động</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="p : ${products}">
+                            <td class="ps-4 text-secondary fw-bold" th:text="'#' + ${p.productId}">#1</td>
+
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img th:src="${p.mainImage != null ? p.mainImage.imageUrl : 'https://via.placeholder.com/60'}"
+                                         class="product-img me-3">
+                                    <div>
+                                        <div class="product-name" th:text="${p.name}">Tên bánh</div>
+                                        <small class="text-muted d-block text-truncate" style="max-width: 200px;" th:text="${p.description}">Mô tả</small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="badge-category" th:text="${p.category}">Loại</span>
+                            </td>
+
+                            <td>
+                                <span class="price-tag" th:text="${#numbers.formatDecimal(p.price,0,'COMMA',0,'POINT')} + ' đ'">0 đ</span>
+                            </td>
+
+                            <td class="text-end pe-4">
+                                <a th:href="@{/admin/products/edit/{id}(id=${p.productId})}"
+                                   class="action-btn btn-edit" title="Sửa">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+
+                                <a th:href="@{/admin/products/delete/{id}(id=${p.productId})}"
+                                   class="action-btn btn-delete"
+                                   onclick="xoaSanPham(event, this)"
+                                   title="Xóa">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+                </div> <div class="mt-4 d-flex justify-content-center">
+                <nav th:replace="~{fragments/pagination :: pagination(pageData=${productPage}, link='/admin/products')}">
+                </nav>
+            </div>
+            </div>
+    </div>
+
+    </main>
+</div>
+</div>
+<script>
+    function xoaSanPham(event, element) {
+        // 1. Chặn ngay hành động chuyển trang mặc định của thẻ <a>
+        event.preventDefault();
+
+        // 2. Lấy đường dẫn xóa từ thuộc tính href của chính thẻ <a> đó
+        const urlXoa = element.getAttribute('href');
+
+        // 3. Hiển thị popup
+        Swal.fire({
+            title: 'Bạn có chắc chắn?',
+            text: "Sản phẩm này và các công thức liên quan sẽ bị xóa, không thể khôi phục!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33', // Màu đỏ cho nút xóa
+            cancelButtonColor: '#6c757d', // Màu xám cho nút hủy
+            confirmButtonText: '<i class="fa-solid fa-trash"></i>  Xóa!',
+            cancelButtonText: 'Hủy bỏ'
+        }).then((result) => {
+            // 4. Nếu người dùng bấm nút xóa"
+            if (result.isConfirmed) {
+                // Chuyển hướng trình duyệt đến URL xóa
+                window.location.href = urlXoa;
+            }
+        });
+    }
+</script>
+
+<script th:inline="javascript">
+    // Đợi HTML load xong hết mới chạy thông báo để tránh lỗi
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // Thymeleaf sẽ tự động lấy chữ "Xóa sản phẩm thành công!" từ Controller đắp vào biến này
+        var successMessage = /*[[${success}]]*/ null;
+
+        if (successMessage) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: successMessage,
+                toast: true,               // Hiển thị kiểu popup
+                position: 'top-end',       // Góc trên cùng bên phải
+                showConfirmButton: false,  // Không cần nút OK
+                timer: 3000,               // Tự tắt sau 3 giây
+                timerProgressBar: true     // Có thanh chạy đếm ngược
+            });
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

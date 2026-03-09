@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        /* Sidebar Style */
+    .sidebar {
+        min-height: 100vh;
+        background: #343a40; /* Màu nền tối */
+        color: white;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    .sidebar a {
+        color: #adb5bd; /* Màu chữ xám nhạt */
+        text-decoration: none;
+        padding: 12px 20px;
+        display: block;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+    }
+
+    /* Hiệu ứng khi di chuột hoặc đang chọn (Active) */
+    .sidebar a:hover, .sidebar a.active {
+        background: #495057;
+        color: #ffc107; /* Màu vàng */
+        border-left: 3px solid #ffc107; /* Vạch vàng bên trái */
+        font-weight: 500;
+    }
+    </style>
+</head>
+<body>
+
+<nav th:fragment="sidebar(activePage)" class="col-md-2 d-none d-md-block sidebar p-0">
+    <div class="p-4 text-center">
+        <i class="fa-solid fa-cake-candles fa-3x text-secondary mb-2"></i>
+        <h4 class="fw-bold">Bakery Admin</h4>
+    </div>
+    <hr class="mx-3">
+    <ul class="list-unstyled">
+        <li>
+            <a href="/admin/dashboard"
+               th:classappend="${activePage == 'dashboard'} ? 'active' : ''">
+                <i class="fa-solid fa-gauge me-2"></i> Tổng quan
+            </a>
+        </li>
+
+        <li>
+            <a th:href="@{/admin/products}"
+               th:classappend="${activePage == 'products'} ? 'active' : ''">
+                <i class="fa-solid fa-bread-slice me-2"></i> Quản lý Bánh
+            </a>
+        </li>
+
+        <li>
+            <a th:href="@{/admin/ingredients}"
+               th:classappend="${activePage == 'ingredients'} ? 'active' : ''">
+                <i class="fa-solid fa-wheat-awn me-2"></i> Nguyên liệu
+            </a>
+        </li>
+
+        <li>
+            <a href="/admin/orders"
+               th:classappend="${activePage == 'orders'} ? 'active' : ''">
+                <i class="fa-solid fa-cart-shopping me-2"></i> Đơn hàng
+            </a>
+        </li>
+    </ul>
+</nav>
+
+</body>
+</html>
