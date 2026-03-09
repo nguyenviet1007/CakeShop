@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ALI Bakery - Thế giới bánh ngọt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/detail_css.css}">
+    <link rel="stylesheet" th:href="@{/css/account.css}">
+</head>
+
+<body>
+<header class="bg-white shadow-sm">
+    <div class="container py-3 d-flex justify-content-between align-items-center">
+        <div class="logo">🍰 ALI Bakery</div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-pink rounded-pill" onclick="showCartModal()">
+                <i class="fas fa-shopping-cart"></i> My cart
+            </button>
+
+            <a th:if="${session.user == null}" th:href="@{/login}" class="btn btn-pink rounded-pill">
+                <i class="fas fa-sign-in-alt"></i> ĐĂNG NHẬP
+            </a>
+            <a th:unless="${session.user == null}" th:href="@{/account/profile}" class="btn btn-pink rounded-pill">
+                <i class="fas fa-user"></i> MY PROFILE
+            </a>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <div class="collapse navbar-collapse justify-content-center">
+                <ul class="navbar-nav gap-3">
+                    <li class="nav-item"><a class="nav-link" th:href="@{/}">Home Page</a></li>
+                    <li class="nav-item" th:each="cat : ${categories}">
+                        <a class="nav-link" th:href="@{/category/{id}(id=${cat.id})}" th:text="${cat.name}">Tên loại bánh</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="#">Blogs</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main class="container my-5">
+    <section>
+        <div class="border-bottom-pink mb-4">
+            <h2 class="section-title" th:text="${currentCategoryName ?: 'BEST SELLING'}">BEST SELLING</h2>
+        </div>
+
+        <div id="productContent">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                <div class="col" th:each="product : ${products}">
+                    <div class="card h-100 product-card border-0 shadow-sm">
+                        <div class="product-image-wrapper p-3">
+                            <div th:each="img : ${product.images}" th:if="${img.isMain}">
+                                <img th:src="@{/img/{file}(file=${img.imageUrl})}"
+                                     class="img-fluid rounded-3"
+                                     th:alt="${product.name}"
+                                     style="height: 200px; width: 100%; object-fit: cover;">
+                            </div>
+                            <img th:if="${#lists.isEmpty(product.images)}"
+                                 th:src="@{/img/chocolate-chip-cake0008choc-AAA.webp}"
+                                 class="img-fluid rounded-3"
+                                 style="height: 200px; width: 100%; object-fit: cover;">
+                        </div>
+
+                        <div class="card-body pt-0 text-center">
+                            <h6 class="card-title fw-bold" th:text="${product.name}">Tên bánh</h6>
+
+                            <div class="rating mb-2 text-warning">
+                    <span th:each="star : ${#numbers.sequence(1, 5)}">
+                        <i class="fas fa-star"></i>
+                    </span>
+                                <small class="text-muted">(5.0)</small>
+                            </div>
+
+                            <p class="price text-pink fw-bold"
+                               th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></p>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center pb-3">
+                            <button type="button" class="btn btn-outline-pink btn-sm rounded-circle"
+                                    th:onclick="'addToCart(' + ${product.productId} + ')'">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+
+                            <button class="btn btn-pink btn-sm px-3 rounded-pill"
+                                    th:onclick="'loadProductDetail(' + ${product.productId} + ')'">
+                                    Đặt ngay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-body p-0 d-flex flex-column flex-lg-row">
+                    <div class="p-4 flex-grow-1 border-end">
+                        <h4 class="mb-4"><i class="fas fa-shopping-cart text-pink"></i> MY CART</h4>
+                        <div id="cartItemsList" class="overflow-auto" style="max-height: 400px;">
+                        </div>
+                    </div>
+                    <div class="p-4 bg-light rounded-end-lg" style="min-width: 350px;">
+                        <div class="user-info mb-4 p-3 bg-white rounded-3 shadow-sm">
+                            <p class="mb-1">Người nhận: <strong id="userName">Nguyễn Văn A</strong></p>
+                            <p class="small text-muted mb-2" id="userAddress">Ngõ 51, Đường Đê La Thành, Hà Nội</p>
+                            <p class="small text-muted mb-2">SĐT: 035******4</p>
+                            <a href="#" class="text-pink small"><i class="fas fa-edit"></i> Đổi thông tin</a>
+                        </div>
+                        <div id="orderSummary" class="mb-4">
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold h5 mb-4 text-pink">
+                            <span>Tổng:</span>
+                            <span id="cartTotalPrice">0 VND</span>
+                        </div>
+                        <button class="btn btn-pink w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="handleCheckout()">THANH TOÁN</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">Thanh Toán Qua QR Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="qrContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-pink" role="status"></div>
+                        <p class="mt-2">Đang tạo mã QR...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/script.js}"></script>
+
+</body>
+
+</html>

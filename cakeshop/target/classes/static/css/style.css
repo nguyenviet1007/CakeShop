@@ -1,0 +1,98 @@
+:root {
+    --primary-pink: #ffc1cc;
+    --dark-pink: #ff8fa3;
+    --light-pink: #fff0f3;
+}
+
+body {
+    font-family: 'Quicksand', sans-serif;
+    background-color: var(--light-pink);
+    color: #444;
+}
+
+.logo {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2.2rem;
+    color: var(--dark-pink);
+}
+
+/* Custom Buttons */
+.btn-pink {
+    background-color: var(--dark-pink);
+    color: white;
+    border: none;
+}
+.btn-pink:hover {
+    background-color: #ff748c;
+    color: white;
+}
+.btn-outline-pink {
+    border-color: var(--dark-pink);
+    color: var(--dark-pink);
+}
+.btn-outline-pink:hover {
+    background-color: var(--dark-pink);
+    color: white;
+}
+
+/* Navigation */
+.navbar {
+    background-color: var(--primary-pink);
+}
+.nav-link {
+    color: white !important;
+    font-weight: 600;
+    border-radius: 20px;
+}
+.nav-link:hover, .nav-link.active {
+    background-color: white;
+    color: var(--dark-pink) !important;
+}
+
+/* Section Decor */
+.section-title {
+    font-weight: 700;
+    color: var(--dark-pink);
+    margin: 0;
+}
+.border-bottom-pink {
+    border-bottom: 3px solid var(--primary-pink);
+}
+
+/* Cards & Banners */
+.banner-card {
+    background-color: white;
+    border-radius: 25px; /* Bo góc cực mềm */
+    border: 2px solid var(--primary-pink);
+}
+
+.product-card {
+    border-radius: 20px !important; /* Bo góc card sản phẩm */
+    transition: transform 0.3s;
+    overflow: hidden;
+}
+.product-card:hover {
+    transform: translateY(-10px);
+}
+
+.text-pink {
+    color: var(--dark-pink) !important;
+}
+
+/* Footer */
+.footer {
+    background-color: white;
+    border-top: 5px solid var(--primary-pink);
+}
+.footer a {
+    text-decoration: none;
+    color: #666;
+}
+.footer a:hover {
+    color: var(--dark-pink);
+}
+.social-icons a {
+    font-size: 1.5rem;
+    margin-right: 15px;
+    color: var(--dark-pink);
+}
