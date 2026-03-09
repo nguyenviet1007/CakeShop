@@ -8,4 +8,6 @@ import java.util.List;
 public interface DailyStockService {
     List<DailyStock> getStockByDate(LocalDate date);
     void saveDailyStock(DailyStockUpdateDTO dto);
+    List<DailyStock> findAll();
+    List<DailyStock> findByDate(LocalDate date);
 }

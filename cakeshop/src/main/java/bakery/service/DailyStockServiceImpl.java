@@ -19,6 +19,7 @@ public class DailyStockServiceImpl implements DailyStockService {
     private final DailyStockRepository dailyStockRepo;
     private final ProductRepository productRepo;
 
+
     public DailyStockServiceImpl(DailyStockRepository dailyStockRepo, ProductRepository productRepo) {
         this.dailyStockRepo = dailyStockRepo;
         this.productRepo = productRepo;
@@ -26,6 +27,14 @@ public class DailyStockServiceImpl implements DailyStockService {
 
     @Override
     public List<DailyStock> getStockByDate(LocalDate date) {
+        return dailyStockRepo.findByDate(date);
+    }
+    public List<DailyStock> findAll() {
+        return dailyStockRepo.findAll();
+    }
+    // Trong DailyStockServiceImpl.java
+    @Override
+    public List<DailyStock> findByDate(LocalDate date) {
         return dailyStockRepo.findByDate(date);
     }
 
