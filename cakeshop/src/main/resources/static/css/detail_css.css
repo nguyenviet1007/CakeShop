@@ -1,106 +1,141 @@
-:root {
-    --primary-pink: #ffc1cc;
-    --dark-pink: #333; /* Màu text tiêu đề theo mockup */
-    --accent-pink: #ff8fa3;
+/* ===== CONTAINER ===== */
+
+.product-detail-container{
+    display:flex;
+    gap:60px;
+    padding:50px;
+    max-width:1100px;
+    margin:auto;
+    align-items:flex-start;
 }
 
-body {
-    font-family: 'Quicksand', sans-serif;
-    color: #333;
+/* ===== LEFT SIDE - GALLERY ===== */
+
+.gallery{
+    width:45%;
 }
 
-/* Ảnh sản phẩm */
-.product-image-container {
-    position: relative;
-    background-color: #fcfcfc;
-    border-radius: 15px;
-    padding: 20px;
+.main-image{
+    width:100%;
+    border-radius:14px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.08);
 }
 
-.badge-sale {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: #333;
-    color: white;
-    padding: 5px 12px;
-    border-radius: 5px;
-    font-weight: bold;
+/* thumbnails */
+
+.thumbnail-list{
+    display:flex;
+    gap:12px;
+    margin-top:15px;
 }
 
-.product-main-img {
-    max-height: 350px;
-    object-fit: contain;
+.thumbnail{
+    width:70px;
+    height:70px;
+    object-fit:cover;
+    cursor:pointer;
+    border-radius:8px;
+    border:2px solid transparent;
+    transition:0.25s;
 }
 
-.product-title-detail {
-    color: var(--dark-pink);
-    margin-top: 15px;
+.thumbnail:hover{
+    transform:scale(1.05);
+    border:2px solid #ff8fa3;
 }
 
-/* Giá & Nút bấm */
-.old-price { color: #999; font-size: 1.2rem; }
-.current-price {
-    color: #333;
-    font-size: 1.8rem;
-    font-weight: 700;
+/* ===== RIGHT SIDE ===== */
+
+.product-info{
+    width:55%;
 }
 
-.quantity-selector .btn-qty {
-    border: 1px solid #ddd;
-    width: 40px;
-    height: 40px;
-    background: white;
+/* title */
+
+.product-title{
+    font-size:26px;
+    font-weight:600;
+    margin-bottom:8px;
 }
 
-.input-qty {
-    border: 1px solid #ddd;
-    border-left: none;
-    border-right: none;
-    width: 60px;
-    height: 40px;
+/* rating */
+
+.rating{
+    color:#f7b500;
+    font-size:14px;
+    margin-bottom:10px;
 }
 
-.btn-buy-now {
-    background-color: #333;
-    color: white;
-    padding: 12px 60px;
-    font-weight: bold;
-    border-radius: 5px;
-    width: 100%;
-    max-width: 300px;
+/* price */
+
+.price{
+    color:#e63946;
+    font-size:30px;
+    margin:10px 0;
 }
 
-.btn-buy-now:hover {
-    background-color: var(--accent-pink);
-    color: white;
+/* description */
+
+.description{
+    color:#666;
+    margin-bottom:20px;
+    line-height:1.6;
 }
 
-/* Perks */
-.service-perks {
-    font-size: 0.9rem;
-    color: #444;
+/* ===== WEIGHT OPTIONS ===== */
+
+.weight-options{
+    margin:10px 0 20px;
 }
 
-.service-perks i {
-    font-size: 10px;
-    color: #666;
-    vertical-align: middle;
+.weight-options button{
+    padding:8px 16px;
+    margin-right:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    background:white;
+    cursor:pointer;
+    transition:0.25s;
 }
 
-/* Tabs & Rating */
-.active-pink {
-    border-bottom: 3px solid #333 !important;
-    font-weight: bold;
-    color: #333 !important;
+.weight-options button:hover{
+    background:#ff8fa3;
+    color:white;
+    border-color:#ff8fa3;
 }
 
-.bg-pink-light {
-    background-color: #eee;
+/* ===== INPUT ===== */
+
+input[type="text"]{
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    margin-top:5px;
 }
 
-.nav-tabs .nav-link {
-    border: none;
-    padding-left: 0;
-    padding-right: 30px;
+/* ===== DELIVERY TEXT ===== */
+
+.product-info p{
+    color:#777;
+    margin:10px 0 20px;
+}
+
+/* ===== BUY BUTTON ===== */
+
+.buy-btn{
+    padding:14px 28px;
+    background:#ff6b6b;
+    border:none;
+    border-radius:10px;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.buy-btn:hover{
+    background:#ff4d4d;
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(0,0,0,0.15);
 }

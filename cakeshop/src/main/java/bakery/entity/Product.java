@@ -1,6 +1,7 @@
 package bakery.entity;
 
 import bakery.validation.UniqueProductName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -27,10 +28,10 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-    @NotBlank(message = "Loại bánh không được để trống")
-    @Size(max = 100, message = "Loại bánh không được vượt quá 100 ký tự")
+    @NotNull(message = "Loại bánh không được để trống")
     @ManyToOne
     @JoinColumn(name = "category_id")
+    @JsonIgnore
     private Category category;
 
 
@@ -54,6 +55,7 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
+    @JsonIgnore
     private List<ProductImage> images = new ArrayList<>();
 
     // Method tiện lợi (giữ nguyên nếu có)
@@ -64,6 +66,7 @@ public class Product {
                 .orElse(images.isEmpty() ? null : images.get(0));
     }
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Recipe> recipes = new ArrayList<>();
 
     public List<Recipe> getRecipes() {

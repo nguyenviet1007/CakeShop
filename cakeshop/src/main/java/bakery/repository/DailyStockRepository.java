@@ -1,6 +1,7 @@
 package bakery.repository;
 
 import bakery.entity.DailyStock;
+import bakery.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,6 +11,8 @@ import java.util.Optional;
 
 @Repository
 public interface DailyStockRepository extends JpaRepository<DailyStock, Long> {
+    //
+    Optional<DailyStock> findByProductAndDate(Product product, LocalDate date);
 
     // Tìm toàn bộ số lượng bánh trên kệ theo một ngày cụ thể
     List<DailyStock> findByDate(LocalDate date);

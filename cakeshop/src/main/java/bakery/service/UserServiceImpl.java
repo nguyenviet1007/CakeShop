@@ -4,6 +4,7 @@ package bakery.service;
 import bakery.entity.User;
 import bakery.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -46,4 +47,5 @@ public class UserServiceImpl {
             return userRepository.save(newUser);
         });
     }
+
 }

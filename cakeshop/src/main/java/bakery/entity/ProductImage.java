@@ -1,5 +1,6 @@
 package bakery.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
@@ -16,6 +17,12 @@ public class ProductImage {
 
     @ManyToOne
     @JoinColumn(name = "product_id")
+    @JsonIgnore
     @ToString.Exclude // Thêm dòng này
     private Product product;
+
+    public boolean isMain() {
+        return isMain;
+    }
+    public void setMain(Boolean main) {}
 }

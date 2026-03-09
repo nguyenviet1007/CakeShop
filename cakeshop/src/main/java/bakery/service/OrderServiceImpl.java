@@ -6,6 +6,7 @@ import bakery.entity.OrderDetail;
 import bakery.entity.User;
 import bakery.repository.OrderDetailRepository;
 import bakery.repository.OrderRepository;
+import bakery.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,9 @@ public class OrderServiceImpl {
 
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Transactional
     public void saveOrder(User user, List<Cart> cartItems) {
@@ -109,5 +113,11 @@ public class OrderServiceImpl {
         }
         return orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+    }
+    public List<Order> getOrdersByCustomer(Long id){
+
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        return orderRepository.findByUserId(user.getId());
     }
 }

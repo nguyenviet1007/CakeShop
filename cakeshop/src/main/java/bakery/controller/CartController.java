@@ -72,8 +72,14 @@ public class CartController {
         String template = "qr_only";
         String info = "Thanh toan don hang " + System.currentTimeMillis();
 
-        String qrUrl = String.format("https://img.vietqr.io/image/%s-%s-%s.png?amount=%d&addInfo=%s",
-                bankId, accountNo, template, totalAmount, info);
+        String qrUrl = String.format(
+                "https://img.vietqr.io/image/%s-%s-%s.png?amount=%s&addInfo=%s",
+                bankId,
+                accountNo,
+                template,
+                totalAmount.toPlainString(),
+                info
+        );
 
         // 3. (Tùy chọn) Lưu đơn hàng vào DB với trạng thái "PENDING"
 

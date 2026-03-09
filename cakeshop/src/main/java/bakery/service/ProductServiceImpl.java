@@ -251,5 +251,27 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
     }
 
+    public List<Product> getAllProducts() {
+        return productRepository.findAllWithImages();
+    }
+
+    public Product getProductById(Long id) {
+        return productRepository.findByIdWithImages(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
+    }
+
+    // Hàm bổ trợ lấy URL ảnh chính
+    public String getMainImageUrl(Product product) {
+        if (product.getImages() == null) return "/img/default.jpg";
+        return product.getImages().stream()
+                .filter(ProductImage::isMain)
+                .map(ProductImage::getImageUrl)
+                .findFirst()
+                .orElse(product.getImages().isEmpty() ? "/img/default.jpg" : product.getImages().get(0).getImageUrl());
+    }
+
+    public List<Product> findByCategoryId(Long categoryId) {
+        return productRepository.findByCategory_Id(categoryId);
+    }
 
 }

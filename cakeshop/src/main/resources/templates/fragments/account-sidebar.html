@@ -1,0 +1,23 @@
+<div th:fragment="accountSidebar" class="account-sidebar">
+
+    <div class="user-info">
+        <div class="avatar"></div>
+        <div>
+            <div class="username" th:text="${customer.username}">
+                username
+            </div>
+            <a href="#" class="edit-profile">Sửa Hồ Sơ</a>
+        </div>
+    </div>
+
+    <div class="menu">
+        <a th:href="@{/account/profile}" class="menu-item">
+            <span>👤</span> Hồ Sơ
+        </a>
+
+        <a th:href="@{/account/orders}" class="menu-item">
+            <span>📦</span> Đơn Mua
+        </a>
+    </div>
+
+</div>

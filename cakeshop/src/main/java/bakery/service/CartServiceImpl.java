@@ -2,13 +2,16 @@ package bakery.service;
 
 
 import bakery.entity.Cart;
+import bakery.entity.DailyStock;
 import bakery.entity.Product;
 import bakery.entity.User;
 import bakery.repository.CartRepository;
+import bakery.repository.DailyStockRepository;
 import bakery.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +22,9 @@ public class CartServiceImpl {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private DailyStockRepository dailyStockRepository;
 
     // Lấy danh sách để đổ vào Mockup
     public List<Cart> findByUserId(Long userId) {
@@ -33,7 +39,7 @@ public class CartServiceImpl {
         cartRepository.deleteById(cartId);
     }
 
-    // Xóa sạch giỏ hàng (Gọi từ OrderService sau khi lưu Order thành công)
+    // Xóa sạch giỏ hàng
     public void clearCart(Long userId) {
         cartRepository.deleteByUserId(userId);
     }
@@ -66,7 +72,7 @@ public class CartServiceImpl {
             // Nếu chưa có thì tạo mới record
             Cart newCart = new Cart();
 
-            // Thiết lập User (Chỉ cần ID để mapping Hibernate)
+            // Thiết lập User
             User user = new User();
             user.setId(userId);
 
@@ -74,7 +80,7 @@ public class CartServiceImpl {
             newCart.setProduct(product);
             newCart.setQuantity(quantity);
 
-            // Lưu giá tại thời điểm thêm vào (Tránh lỗi ép kiểu nếu dùng Double)
+            // Lưu giá tại thời điểm thêm vào
             newCart.setPrice(product.getPrice());
 
             cartRepository.save(newCart);
@@ -83,16 +89,22 @@ public class CartServiceImpl {
 
     // Logic cho nút + và - trong mockup giỏ hàng
     public void updateQuantity(Long cartId, Integer newQuantity) {
-        // 1. Kiểm tra điều kiện số lượng (Validation)
-        if (newQuantity == null || newQuantity <= 0) {
-            throw new IllegalArgumentException("Số lượng phải là số dương lớn hơn 0");
+        if (newQuantity <= 0) {
+            cartRepository.deleteById(cartId);
+            return;
         }
 
-        // 2. Tìm giỏ hàng
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giỏ hàng"));
 
-        // 3. Cập nhật và lưu
+        // Kiểm tra tồn kho thực tế
+        DailyStock stock = dailyStockRepository.findByProductAndDate(cart.getProduct(), LocalDate.now())
+                .orElseThrow(() -> new RuntimeException("Sản phẩm hiện không có trong kho"));
+
+        if (stock.getAvailableQuantity() < newQuantity) {
+            throw new RuntimeException("Kho chỉ còn " + stock.getAvailableQuantity() + " sản phẩm");
+        }
+
         cart.setQuantity(newQuantity);
         cartRepository.save(cart);
     }

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="header_head">
+    <meta charset="UTF-8">
+    <title>Cakeshop</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav th:fragment="navbar" class="navbar">
+    <div class="container">
+        <a th:href="@{/}" class="logo">Bakery Store</a>
+        <ul class="nav-links">
+            <li><a th:href="@{/}">Tất cả</a></li>
+            <li th:each="cat : ${categories}">
+                <a th:href="@{/(categoryId=${cat.id})}" th:text="${cat.name}">Category</a>
+            </li>
+            <li><a th:href="@{/cart}">Giỏ hàng</a></li>
+        </ul>
+    </div>
+</nav>
+
+<footer th:fragment="footer" class="footer">
+    <p>&copy; 2024 Cakeshop - Delicious Moments</p>
+</footer>
+</body>
+</html>

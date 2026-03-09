@@ -11,11 +11,11 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     // Tìm bằng Số điện thoại
     Optional<User> findByPhone(String phone);
-
     // Tìm bằng Email
     Optional<User> findByEmail(String email);
 
     // Kiểm tra tồn tại để phục vụ Đăng ký
     boolean existsByPhone(String phone);
     boolean existsByEmail(String email);
+    Optional<User> findByUsername(String username);
 }
