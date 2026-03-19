@@ -2,26 +2,44 @@
 <div th:replace="fragments/account-layout :: accountLayout(~{::content})">
     <div th:fragment="content">
         <h2>Đơn Mua</h2>
-        <div class="order-list">
+        <!-- Tabs trạng thái -->
+        <div class="order-tabs">
+            <a th:href="@{/account/orders}" class="tab">Tất cả</a>
+            <a th:href="@{/account/orders(status='UNPAID')}" class="tab">Chưa thanh toán</a>
+            <a th:href="@{/account/orders(status='PAID')}" class="tab">Đã thanh toán</a>
+            <a th:href="@{/account/orders(status='SHIPPING')}" class="tab">Vận chuyển</a>
+            <a th:href="@{/account/orders(status='COMPLETED')}" class="tab">Hoàn thành</a>
+            <a th:href="@{/account/orders(status='CANCELLED')}" class="tab">Đã hủy</a>
+        </div>
+        <!-- Nếu không có đơn -->
+        <div th:if="${#lists.isEmpty(orders)}" class="no-order">
+            <img src="/images/no-order.png" width="120">
+            <p>Chưa có đơn hàng</p>
+        </div>
+        <!-- Danh sách đơn -->
+        <div class="order-list" th:if="${!#lists.isEmpty(orders)}">
             <div class="order-card" th:each="order : ${orders}">
                 <div class="order-header">
-                    Order ID: <span th:text="${order.id}"></span>
+                    <span>Order ID: <b th:text="${order.id}"></b></span>
+                    <span class="status"
+                          th:switch="${order.status}">
+                    <span th:case="'UNPAID'">Chưa thanh toán</span>
+                    <span th:case="'PAID'">Đã thanh toán</span>
+                    <span th:case="'SHIPPING'">Vận chuyển</span>
+                    <span th:case="'COMPLETED'">Hoàn thành</span>
+                    <span th:case="'CANCELLED'">Đã hủy</span>
+                </span>
                 </div>
                 <div class="order-body">
                     <div>
                         Tổng tiền:
-                        <b th:text="${order.totalAmount}"></b>
-                    </div>
-                    <div>
-                        Trạng thái:
-                        <span class="status"
-                              th:text="${order.status}">
-            </span>
+                        <b th:text="${#numbers.formatDecimal(order.totalAmount,0,'COMMA',0,'POINT')} + 'đ'"></b>
                     </div>
                 </div>
                 <div class="order-footer">
-                    <a th:href="@{/account/orders/{id}(id=${order.id})}">
-                        Track Order
+                    <a class="btn-track"
+                       th:href="@{/account/orders/{id}(id=${order.id})}">
+                        Xem chi tiết
                     </a>
                 </div>
             </div>

@@ -46,21 +46,24 @@ public class CartServiceImpl {
 
     // Logic cho icon Giỏ hàng ở trang chủ
     public void addToCart(Long userId, Long productId, Integer quantity) {
-        // 1. Kiểm tra userId không được null
+        // Kiểm tra userId không được null
         if (userId == null) {
             throw new IllegalArgumentException("User ID không được để trống");
         }
 
-        // 2. Kiểm tra quantity phải lớn hơn 0
+        // Kiểm tra quantity phải lớn hơn 0
         if (quantity == null || quantity <= 0) {
             throw new IllegalArgumentException("Số lượng phải là số dương lớn hơn 0");
         }
 
-        // 3. Kiểm tra sản phẩm có tồn tại không
+        // Kiểm tra sản phẩm có tồn tại không
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
 
-        // 4. Tìm xem trong giỏ đã có sản phẩm này chưa
+        DailyStock stock = dailyStockRepository.findByProductAndDate(product, LocalDate.now())
+                .orElseThrow(() -> new RuntimeException("Sản phẩm hiện không có trong kho"));
+
+        // Tìm xem trong giỏ đã có sản phẩm này chưa
         Optional<Cart> existingCart = cartRepository.findByUserIdAndProductProductId(userId, productId);
 
         if (existingCart.isPresent()) {

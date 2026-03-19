@@ -3,28 +3,29 @@
     <div th:fragment="content">
         <h2>Hồ Sơ Của Tôi</h2>
         <form class="profile-form"
-              th:action="@{/profile/update}"
+              th:action="@{/update}"
               th:object="${customer}"
               method="post">
+            <input type="hidden" th:field="*{id}">
             <div class="form-group">
                 <label>Tên đăng nhập</label>
-                <input type="text" th:value="${customer.username}" readonly>
+                <input type="text" th:field="*{username}" readonly>
             </div>
             <div class="form-group">
                 <label>Tên</label>
-                <input type="text" th:value="${customer.name}">
+                <input type="text" th:field="*{name}">
             </div>
             <div class="form-group">
                 <label>Email</label>
-                <input type="text" th:value="${customer.email}">
+                <input type="text" th:field="*{email}">
             </div>
             <div class="form-group">
                 <label>Số điện thoại</label>
-                <input type="text" th:value="${customer.phone}">
+                <input type="text" th:field="*{phone}">
             </div>
             <div class="form-group">
                 <label>Địa chỉ</label>
-                <input type="text" th:value="${customer.address}">
+                <input type="text" th:field="*{address}">
             </div>
             <button class="save-btn" type="submit">Lưu</button>
         </form>

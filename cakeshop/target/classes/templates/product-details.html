@@ -47,9 +47,51 @@
             <h3>Cake Message</h3>
             <input type="text" placeholder="Write A Sweet Wish!">
             <p>⏱ Earliest Delivery: 2-3 Hrs</p>
-            <button class="buy-btn">
+            <button class="buy-btn"
+                    th:onclick="'addToCart(' + ${product.productId} + ')'">
                 Buy Now | VND <span th:text="${product.price}"></span>
             </button>
+        </div>
+    </div>
+    <!-- REVIEWS SECTION -->
+    <div class="review-section">
+        <h2>Customer Reviews</h2>
+        <!-- Tổng quan rating -->
+        <div class="review-summary">
+            <h3>⭐ 4.5 / 5</h3>
+            <p>Based on 1.3K reviews</p>
+        </div>
+        <!-- Danh sách feedback -->
+        <div class="review-list">
+            <div class="review-item" >
+                <div class="review-header">
+                    <strong >User Name</strong>
+                    <span class="stars" >⭐⭐⭐⭐⭐</span>
+                </div>
+                <p class="review-content" >
+                    Very delicious cake!
+                </p>
+                <small >
+                    01/01/2026
+                </small>
+            </div>
+        </div>
+        <!-- Form thêm đánh giá -->
+        <div class="review-form">
+            <h3>Write a Review</h3>
+            <form >
+                <input type="hidden" name="productId" />
+                <label>Rating:</label>
+                <select name="rating">
+                    <option value="5">⭐⭐⭐⭐⭐</option>
+                    <option value="4">⭐⭐⭐⭐</option>
+                    <option value="3">⭐⭐⭐</option>
+                    <option value="2">⭐⭐</option>
+                    <option value="1">⭐</option>
+                </select>
+                <textarea name="comment" placeholder="Write your feedback..." required></textarea>
+                <button type="submit">Submit Review</button>
+            </form>
         </div>
     </div>
 </div>

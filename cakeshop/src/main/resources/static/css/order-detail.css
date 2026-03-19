@@ -1,0 +1,30 @@
+.order-info{
+    display:flex;
+    gap:30px;
+    margin-bottom:20px;
+}
+
+.status{
+    color:#ee4d2d;
+    font-weight:bold;
+}
+
+.order-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.order-table th,
+.order-table td{
+    border-bottom:1px solid #eee;
+    padding:10px;
+}
+
+.order-total{
+    margin-top:20px;
+    font-size:18px;
+}
+
+.back-btn{
+    margin-top:20px;
+}

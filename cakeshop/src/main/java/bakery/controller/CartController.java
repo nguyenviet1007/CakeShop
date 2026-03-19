@@ -56,6 +56,13 @@ public class CartController {
         User user = (User) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(401).body("Vui lòng đăng nhập");
 
+        if (user.getAddress() == null || user.getAddress().trim().isEmpty()
+                || user.getPhone() == null || user.getPhone().trim().isEmpty()) {
+
+            return ResponseEntity.badRequest()
+                    .body("Vui lòng cập nhật địa chỉ và số điện thoại trước khi thanh toán");
+        }
+
         List<Cart> items = cartService.findByUserId(user.getId());
         if (items.isEmpty()) return ResponseEntity.badRequest().body("Giỏ hàng trống");
 
@@ -80,9 +87,6 @@ public class CartController {
                 totalAmount.toPlainString(),
                 info
         );
-
-        // 3. (Tùy chọn) Lưu đơn hàng vào DB với trạng thái "PENDING"
-
         return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "total", totalAmount));
     }
 }

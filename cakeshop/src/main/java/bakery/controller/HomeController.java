@@ -1,23 +1,14 @@
 package bakery.controller;
 
 
-import bakery.entity.Category;
-import bakery.entity.Order;
-import bakery.entity.Product;
-import bakery.entity.User;
-import bakery.repository.CategoryRepository;
-import bakery.repository.OrderRepository;
-import bakery.repository.ProductRepository;
-import bakery.repository.UserRepository;
+import bakery.entity.*;
+import bakery.repository.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,6 +22,8 @@ public class HomeController {
     @Autowired private UserRepository userRepository;
 
     @Autowired private OrderRepository orderRepository;
+
+    @Autowired private OrderDetailRepository orderDetailRepository;
 
     @GetMapping("/")
     public String index(Model model) {
@@ -72,31 +65,62 @@ public class HomeController {
     }
 
     @GetMapping("/account/orders")
-    public String orders(HttpSession session, Model model){
+    public String orders(@RequestParam(required = false) String status,
+                         HttpSession session,
+                         Model model) {
 
         User user = (User) session.getAttribute("user");
 
-        List<Order> orders = orderRepository.findByUserId(user.getId());
+        if (user == null) {
+            return "redirect:/login";
+        }
+        List<Order> orders;
+
+        // nếu không chọn status -> lấy tất cả
+        if (status == null || status.isEmpty()) {
+            orders = orderRepository.findByUserId(user.getId());
+        }
+        // nếu có status -> lọc theo trạng thái
+        else {
+            orders = orderRepository.findByUserIdAndStatus(user.getId(), status);
+        }
 
         model.addAttribute("orders", orders);
-
+        model.addAttribute("currentStatus", status);
         return "orders";
+    }
+    @GetMapping("/account/orders/{id}")
+    public String orderDetail(
+            @PathVariable Long id,
+            Model model) {
+
+        Order order = orderRepository.findById(id).orElse(null);
+
+        List<OrderDetail> orderDetails = orderDetailRepository.findByOrderId(id);
+
+        model.addAttribute("order", order);
+        model.addAttribute("orderDetails", orderDetails);
+
+        return "order-detail";
     }
     @PostMapping("/update")
     public String updateProfile(@ModelAttribute("customer") User formUser,
-                                Authentication authentication) {
+                                HttpSession session) {
 
-        String username = authentication.getName();
+        User user = (User) session.getAttribute("user");
 
-        User user = userRepository.findByUsername(username).orElseThrow();
+        if(user == null){
+            return "redirect:/login";
+        }
 
-        // chỉ update các field cho phép
         user.setName(formUser.getName());
         user.setEmail(formUser.getEmail());
         user.setPhone(formUser.getPhone());
         user.setAddress(formUser.getAddress());
 
         userRepository.save(user);
+
+        session.setAttribute("user", user);
 
         return "redirect:/account/profile?success";
     }

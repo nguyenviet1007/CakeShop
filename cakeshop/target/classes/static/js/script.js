@@ -15,14 +15,14 @@ async function updateQty(cartId, newQuantity) {
     // 1. Nếu số lượng giảm xuống 0, có thể hỏi người dùng có muốn xóa không
     if (newQuantity < 1) {
         if (confirm("Bạn có muốn xóa sản phẩm này khỏi giỏ hàng?")) {
-            // Bạn có thể viết thêm API delete hoặc mặc định để server xử lý xóa nếu quantity = 0
+
         } else {
-            return; // Dừng lại nếu người dùng không đồng ý
+            return; // Dừng lại nếu không đồng ý
         }
     }
 
     try {
-        // 2. Gọi API update với phương thức PUT đúng như Controller yêu cầu
+        // 2. Gọi API update    
         const response = await fetch(`/api/cart/update?cartId=${cartId}&quantity=${newQuantity}`, {
             method: 'PUT',
             headers: {
@@ -93,8 +93,10 @@ async function loadCartData() {
         total.toLocaleString('vi-VN') + ' VND';
 }
 async function handleCheckout() {
+    const paymentMethod =
+        document.querySelector('input[name="paymentMethod"]:checked').value;
     try {
-        // 1. Gọi API tạo thông tin thanh toán (API này mình đã hướng dẫn ở bước trước)
+        // 1. Gọi API tạo thông tin thanh toán
         const response = await fetch('/api/cart/checkout', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
@@ -108,8 +110,28 @@ async function handleCheckout() {
 
         const data = await response.json();
 
-        // 2. Chèn nội dung QR vào Modal (hoặc vùng hiển thị)
-        // Đảm bảo bạn có một div với id="qrContent" trong HTML
+        if (paymentMethod === "COD") {
+
+            const confirmResponse = await fetch('/api/order/confirm', {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentMethod: "COD" })
+            });
+
+            const message = await confirmResponse.text();
+
+            if (confirmResponse.ok) {
+                alert("Đặt hàng thành công!");
+                await loadCartData();
+                window.location.href = "/";
+            } else {
+                alert(message);
+            }
+
+            return;
+        }
+
+        // 2. Chèn nội dung QR vào Modal
         const qrContent = document.getElementById('qrContent');
         if (qrContent) {
             qrContent.innerHTML = `
@@ -126,22 +148,24 @@ async function handleCheckout() {
             `;
         }
 
-        // 3. Kích hoạt Modal hiển thị (Sử dụng Bootstrap 5)
+        // 3. Kích hoạt Modal hiển thị
         const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
         checkoutModal.show();
 
     } catch (error) {
         console.error("Lỗi khi xử lý thanh toán:", error);
-        alert("Không thể kết nối đến máy chủ thanh toán.");
+        alert(error.message);
     }
 }
 
 // Hàm giả lập xác nhận sau khi chuyển khoản
 async function confirmPaymentSuccess() {
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
     try {
         const response = await fetch('/api/order/confirm', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({paymentMethod: paymentMethod})
         });
 
         if (response.ok) {

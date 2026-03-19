@@ -29,35 +29,36 @@ public class OrderServiceImpl {
     private UserRepository userRepository;
 
     @Transactional
-    public void saveOrder(User user, List<Cart> cartItems) {
+    public void saveOrder(User user, List<Cart> cartItems, String paymentMethod) {
         // 1. Tạo đối tượng Order mới
         Order order = new Order();
         order.setUser(user);
         order.setOrderDate(LocalDateTime.now());
-        order.setStatus("PAID"); // Trạng thái đã thanh toán
+
+        if ("COD".equals(paymentMethod)) {
+            order.setStatus("UNPAID");
+            order.setPayment("CASH");
+            } else {
+            order.setStatus("PAID");
+            order.setPayment("ONLINE PAYMENT");
+        }
 
         // 2. Tính tổng tiền và chuẩn bị danh sách chi tiết đơn hàng
         BigDecimal total = BigDecimal.ZERO;
         List<OrderDetail> details = new ArrayList<>();
-
         for (Cart item : cartItems) {
             OrderDetail detail = new OrderDetail();
             detail.setOrder(order);
             detail.setProduct(item.getProduct());
             detail.setQuantity(item.getQuantity());
-
             // Lưu giá tại thời điểm mua để tránh việc sau này sản phẩm đổi giá làm sai lệch hóa đơn
             BigDecimal priceAtPurchase = item.getProduct().getPrice();
             detail.setPrice(priceAtPurchase);
-
             BigDecimal itemTotal = priceAtPurchase.multiply(BigDecimal.valueOf(item.getQuantity()));
-
             // Cộng dồn vào tổng hóa đơn
             total = total.add(itemTotal);
-
             details.add(detail);
         }
-
         order.setTotalAmount(total);
 
         // 3. Lưu Order vào Database trước để lấy ID

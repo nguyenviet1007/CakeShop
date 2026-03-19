@@ -43,7 +43,7 @@ public class UserServiceImpl {
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setName(name);
-            newUser.setPassword(""); // OAuth không cần pass
+            newUser.setPassword("");
             return userRepository.save(newUser);
         });
     }
