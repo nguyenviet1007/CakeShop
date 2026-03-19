@@ -24,5 +24,7 @@ public class Feedback {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    private int rating;
+
     private LocalDateTime createdAt;
 }
