@@ -1,0 +1,56 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:replace="fragments/account-layout :: accountLayout(~{::content})">
+<div th:fragment="content">
+    <h2>Chi tiết đơn hàng</h2>
+    <div class="order-info">
+        <div>
+            <b>Mã đơn hàng:</b>
+            <span th:text="${order.id}"></span>
+        </div>
+        <div>
+            <b>Ngày đặt:</b>
+            <span th:text="${order.orderDate}"></span>
+        </div>
+        <div>
+            <b>Trạng thái:</b>
+            <span class="status"
+                  th:switch="${order.status}">
+                <span th:case="'UNPAID'">Chưa thanh toán</span>
+                <span th:case="'PAID'">Đã thanh toán</span>
+                <span th:case="'SHIPPING'">Vận chuyển</span>
+                <span th:case="'COMPLETED'">Hoàn thành</span>
+                <span th:case="'CANCELLED'">Đã hủy</span>
+            </span>
+        </div>
+    </div>
+    <!-- Danh sách sản phẩm -->
+    <table class="order-table">
+        <thead>
+        <tr>
+            <th>Sản phẩm</th>
+            <th>Giá</th>
+            <th>Số lượng</th>
+            <th>Tổng</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${orderDetails}">
+            <td th:text="${item.product.name}"></td>
+            <td th:text="${item.price} + 'VND'"></td>
+            <td th:text="${item.quantity}"></td>
+            <td th:text="${item.price * item.quantity} + 'VND'"></td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="order-total">
+        Tổng tiền:
+        <b th:text="${order.totalAmount} + 'đ'"></b>
+    </div>
+    <div class="back-btn">
+        <a th:href="@{/account/orders}">
+            ← Quay lại đơn hàng
+        </a>
+    </div>
+</div>
+</div>
+</html>
