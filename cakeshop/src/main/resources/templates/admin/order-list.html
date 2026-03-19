@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Đơn Hàng - Bakery Admin</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Nunito', 'Segoe UI', sans-serif; }
+        .glass-toolbar { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #e9ecef; position: sticky; top: 0; z-index: 1000; padding: 15px 20px; }
+        .btn-back { color: #495057; font-size: 1.2rem; margin-right: 15px; transition: 0.2s; }
+        .nav-pills .nav-link { color: #6c757d; font-weight: 600; border-radius: 20px; padding: 8px 20px; margin-right: 10px; border: 1px solid #dee2e6; cursor: pointer; transition: 0.2s; }
+        .nav-pills .nav-link.active { background-color: #0dcaf0; color: white; border-color: #0dcaf0; }
+        .order-card { background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: none; overflow: hidden; }
+        .table > :not(caption) > * > * { padding: 15px 20px; vertical-align: middle; }
+        .order-id { font-weight: 800; color: #495057; }
+        .order-time { font-size: 0.85rem; color: #6c757d; }
+        .customer-name { font-weight: bold; color: #212529; margin-bottom: 0; }
+        .customer-type { font-size: 0.8rem; padding: 2px 8px; border-radius: 10px; background: #e9ecef; color: #495057; }
+        .type-online { background: #d1e7dd; color: #0f5132; }
+        .total-amount { font-weight: bold; color: #dc3545; font-size: 1.1rem; }
+        .badge-status { padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; }
+        .bg-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .bg-completed { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .bg-cancelled { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        .btn-action { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="glass-toolbar d-flex justify-content-between align-items-center shadow-sm">
+    <div class="d-flex align-items-center">
+        <a href="/admin/products" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
+        <h4 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-clipboard-list text-info me-2"></i>Quản Lý Đơn Hàng</h4>
+    </div>
+</div>
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+
+        <ul class="nav nav-pills" id="statusTabs">
+            <li class="nav-item"><button class="nav-link active" data-filter="all">Tất cả</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="PENDING">Chờ xử lý</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="SHIPPING">Đang giao hàng</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="COMPLETED">Hoàn thành</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="CANCELLED">Đã hủy</button></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+
+            <div class="input-group" style="width: 250px;">
+                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" id="searchFilter" class="form-control border-start-0 ps-0" placeholder="Tìm mã, tên khách...">
+            </div>
+
+            <input type="date" id="dateFilter" class="form-control fw-bold text-secondary border-secondary" style="width: 160px;" title="Lọc theo ngày">
+
+        </div>
+    </div>
+
+    <div class="order-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary">
+                <tr>
+                    <th>Mã Đơn</th>
+                    <th>Ngày Đặt</th>
+                    <th>Khách Hàng</th>
+                    <th>Kênh Bán</th>
+                    <th>Tổng Tiền</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-center">Thao Tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}" class="order-row"
+                    th:attr="data-status=${order.status}, data-date=${#temporals.format(order.orderDate, 'yyyy-MM-dd')}">
+
+                    <td class="order-id" th:text="'#ORD-' + ${order.id}">#ORD-1</td>
+                    <td>
+                        <div th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy')}">28/02/2026</div>
+                        <div class="order-time" th:text="${#temporals.format(order.orderDate, 'HH:mm')}">09:15</div>
+                    </td>
+                    <td>
+                        <th:block th:if="${order.user != null}">
+                            <p class="customer-name" th:text="${order.user.name}">Nguyễn Văn A</p>
+                            <small class="text-muted"><i class="fa-solid fa-user fa-xs me-1"></i>Thành viên</small>
+                        </th:block>
+                        <th:block th:unless="${order.user != null}">
+                            <p class="customer-name">Khách Lẻ</p>
+                            <small class="text-muted">Mua tại quầy</small>
+                        </th:block>
+                    </td>
+                    <td>
+                        <span th:if="${order.user != null}" class="customer-type type-online"><i class="fa-solid fa-globe me-1"></i>Web Online</span>
+                        <span th:unless="${order.user != null}" class="customer-type"><i class="fa-solid fa-store me-1"></i>Tại Quầy</span>
+                    </td>
+                    <td class="total-amount" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">185,000đ</td>
+
+                    <td>
+                        <span th:if="${order.status == 'PENDING'}" class="badge-status bg-pending"><i class="fa-solid fa-clock me-1"></i>Chờ xử lý</span>
+                        <span th:if="${order.status == 'SHIPPING'}" class="badge-status bg-info text-dark"><i class="fa-solid fa-truck-fast me-1"></i>Đang giao hàng</span>
+                        <span th:if="${order.status == 'COMPLETED'}" class="badge-status bg-completed"><i class="fa-solid fa-check-double me-1"></i>Hoàn thành</span>
+                        <span th:if="${order.status == 'CANCELLED'}" class="badge-status bg-cancelled"><i class="fa-solid fa-ban me-1"></i>Đã hủy</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-info text-white btn-action" th:onclick="|openDetailModal(${order.id})|" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
+
+                        <th:block th:if="${order.status == 'PENDING'}">
+                            <button class="btn btn-primary btn-action" th:onclick="|changeStatus(${order.id}, 'SHIPPING')|" title="Giao cho Shipper"><i class="fa-solid fa-truck-fast"></i></button>
+                            <button class="btn btn-danger btn-action" th:onclick="|changeStatus(${order.id}, 'CANCELLED')|" title="Hủy đơn"><i class="fa-solid fa-xmark"></i></button>
+                        </th:block>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(orders)}">
+                    <td colspan="7" class="text-center py-5 text-muted">Chưa có đơn hàng nào trong hệ thống!</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow" id="modalContainer">
+            <div th:fragment="modalDetailContent" id="modalContent" th:if="${order != null}">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-receipt text-secondary me-2"></i>Chi Tiết Đơn Hàng <span class="text-info" th:text="'#ORD-' + ${order.id}"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Thông tin khách hàng:</h6>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-secondary bg-opacity-10 p-3 rounded-circle me-3"><i class="fa-solid fa-user fa-lg text-secondary"></i></div>
+                                <div>
+                                    <h6 class="fw-bold mb-1" th:text="${order.user != null ? order.user.name : 'Khách Lẻ tại quầy'}">Trần Thị Bích</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                            <h6 class="text-muted mb-2">Ngày đặt hàng:</h6>
+                            <div class="fw-bold fs-5 text-dark" th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy - HH:mm')}">28/02/2026</div>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">Danh sách sản phẩm</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light text-center">
+                            <tr>
+                                <th>Tên Bánh</th>
+                                <th width="120">Đơn Giá</th>
+                                <th width="100">Số Lượng</th>
+                                <th width="120">Thành Tiền</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="detail : ${order.orderDetails}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-bold" th:text="${detail.product.name}">Tên Bánh</span>
+                                    </div>
+                                </td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(detail.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                                <td class="text-center fw-bold" th:text="${detail.quantity}">2</td>
+                                <td class="text-end fw-bold text-dark" th:text="${#numbers.formatDecimal(detail.price * detail.quantity, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                            </tr>
+                            </tbody>
+                            <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end text-danger fs-5 fw-bold">Tổng Cộng:</td>
+                                <td class="text-end text-danger fs-5 fw-bold" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-info text-white" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> In Hóa Đơn</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. CHỨC NĂNG LỌC TỔNG HỢP
+    function applyFilters() {
+        const activeStatus = document.querySelector('#statusTabs .nav-link.active').getAttribute('data-filter');
+        const dateValue = document.getElementById('dateFilter').value;
+        const searchValue = document.getElementById('searchFilter').value.toLowerCase();
+
+        const rows = document.querySelectorAll('.order-row');
+
+        rows.forEach(row => {
+            const rowStatus = row.getAttribute('data-status');
+            const rowDate = row.getAttribute('data-date');
+            const rowText = row.innerText.toLowerCase();
+
+            const matchStatus = (activeStatus === 'all' || rowStatus === activeStatus);
+            const matchDate = (!dateValue || rowDate === dateValue);
+            const matchSearch = (!searchValue || rowText.includes(searchValue));
+
+            if (matchStatus && matchDate && matchSearch) {
+                row.style.display = 'table-row';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Gắn sự kiện lắng nghe cho các bộ lọc
+    document.querySelectorAll('#statusTabs .nav-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('#statusTabs .nav-link').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            applyFilters();
+        });
+    });
+
+    document.getElementById('searchFilter').addEventListener('input', applyFilters);
+    document.getElementById('dateFilter').addEventListener('change', applyFilters);
+
+
+    // 2. CHỨC NĂNG HIỂN THỊ MODAL CHI TIẾT
+    const detailModal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+
+    function openDetailModal(orderId) {
+        fetch(`/admin/orders/${orderId}/details`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('modalContainer').innerHTML = html;
+                detailModal.show();
+            });
+    }
+
+    // 3. CHỨC NĂNG ĐỔI TRẠNG THÁI (GỌI API BACKEND)
+    function changeStatus(id, action) {
+        let title = '';
+        let icon = 'question';
+        let confirmColor = '';
+
+        if (action === 'SHIPPING') {
+            title = 'Chuyển đơn này cho Shipper?';
+            confirmColor = '#0d6efd';
+        } else if (action === 'CANCELLED') {
+            title = 'Bạn chắc chắn muốn Hủy đơn?';
+            icon = 'warning';
+            confirmColor = '#dc3545';
+        }
+
+        Swal.fire({
+            title: title,
+            text: "Trạng thái đơn hàng sẽ được cập nhật.",
+            icon: icon,
+            showCancelButton: true,
+            confirmButtonColor: confirmColor,
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Đồng ý',
+            cancelButtonText: 'Đóng'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/orders/${id}/status?status=${action}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: data.message, showConfirmButton: false, timer: 1500 });
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        Swal.fire('Lỗi', data.message, 'error');
+                    }
+                });
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

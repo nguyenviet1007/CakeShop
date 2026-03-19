@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bakery POS - Bán Hàng Tại Quầy</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { background-color: #f0f2f5; font-family: 'Nunito', sans-serif; height: 100vh; overflow: hidden; }
+    .pos-header { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 10px 20px; z-index: 10; position: relative; }
+    .pos-layout { display: flex; height: calc(100vh - 60px); }
+    .product-area { flex: 7; padding: 20px; overflow-y: auto; background: #f8f9fa; }
+    .cart-area { flex: 3; background: #fff; border-left: 1px solid #dee2e6; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.02); }
+    .pos-card { border: none; border-radius: 12px; cursor: pointer; transition: 0.2s; overflow: hidden; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.04); height: 100%; position: relative; }
+    .pos-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border: 1px solid #0dcaf0; }
+    .pos-card img { height: 140px; object-fit: cover; width: 100%; }
+    .stock-badge { position: absolute; top: 8px; right: 8px; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; z-index: 2; }
+    .cart-header { padding: 15px; border-bottom: 1px solid #eee; background: #f8f9fa; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 15px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #ddd; padding-bottom: 10px; margin-bottom: 10px; }
+    .qty-control { display: flex; align-items: center; background: #f1f3f5; border-radius: 20px; padding: 2px 5px; }
+    .qty-btn { border: none; background: transparent; width: 25px; height: 25px; border-radius: 50%; font-weight: bold; }
+    .qty-btn:hover { background: #e2e6ea; }
+    .qty-input { width: 30px; text-align: center; border: none; background: transparent; font-weight: bold; font-size: 0.9rem; }
+    .cart-footer { padding: 20px; border-top: 1px solid #eee; background: #fff; }
+    .total-row { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: #dc3545; }
+    .btn-checkout { width: 100%; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 10px; }
+    .opacity-50 { opacity: 0.5; filter: grayscale(1); }
+  </style>
+</head>
+<body>
+
+<div class="pos-header d-flex justify-content-between align-items-center">
+  <div>
+    <a th:href="@{/admin/daily-stock}" class="text-secondary me-3 fs-5"><i class="fa-solid fa-arrow-left"></i></a>
+    <span class="fs-5 fw-bold"><i class="fa-solid fa-cash-register text-info me-2"></i>Thu Ngân Bán Hàng (POS)</span>
+  </div>
+  <div class="fw-bold text-success"><i class="fa-solid fa-circle-user me-1"></i> Admin</div>
+</div>
+
+<div class="pos-layout">
+  <div class="product-area">
+    <div class="mb-3 d-flex gap-2">
+      <button class="btn btn-info text-white rounded-pill px-4 fw-bold">Tất cả</button>
+      <input type="text" id="searchInput" onkeyup="searchProducts()" class="form-control rounded-pill ms-auto" placeholder="🔍 Tìm mã, tên bánh..." style="max-width: 250px;">
+    </div>
+
+    <div class="row g-3" id="productList">
+      <div class="col-xl-3 col-lg-4 col-md-6 product-item"
+           th:each="stock : ${stocks}"
+           th:if="${stock.product.isVisible}">
+
+        <div class="pos-card"
+             th:classappend="${stock.availableQuantity <= 0 ? 'opacity-50' : ''}"
+             th:attr="data-id=${stock.product.productId},
+              data-name=${stock.product.name},
+              data-price=${stock.product.discountPercent > 0 ? (stock.product.price * (100 - stock.product.discountPercent) / 100) : stock.product.price},
+              data-stock=${stock.availableQuantity}"
+             onclick="handleCardClick(this)">
+
+          <span class="stock-badge" th:classappend="${stock.availableQuantity <= 0 ? 'bg-danger' : 'bg-dark'}">
+              Tồn: <span th:text="${stock.availableQuantity}">0</span>
+          </span>
+          <span th:if="${stock.product.discountPercent > 0}"
+                class="badge bg-warning text-dark position-absolute"
+                style="top: 8px; left: 8px; z-index: 2;">
+    <i class="fa-solid fa-tag"></i> -<span th:text="${stock.product.discountPercent}"></span>%
+</span>
+          <img th:if="${stock.product.mainImage != null}" th:src="${stock.product.mainImage.imageUrl}" alt="Bánh">
+          <img th:unless="${stock.product.mainImage != null}" src="https://via.placeholder.com/500?text=No+Image" alt="Bánh">
+
+          <div class="p-2 text-center">
+            <h6 class="mb-1 text-truncate fw-bold product-name" th:text="${stock.product.name}">Tên Bánh</h6>
+
+            <div th:if="${stock.product.discountPercent > 0}">
+        <span class="text-muted text-decoration-line-through small"
+              th:text="${#numbers.formatDecimal(stock.product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+              <br>
+              <span class="text-danger fw-bold"
+                    th:with="discountPrice=${stock.product.price * (100 - stock.product.discountPercent) / 100}"
+                    th:text="${#numbers.formatDecimal(discountPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+            </div>
+
+            <div th:unless="${stock.product.discountPercent > 0}">
+        <span class="text-danger fw-bold"
+              th:text="${#numbers.formatDecimal(stock.product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 text-center mt-5" th:if="${#lists.isEmpty(stocks)}">
+        <h5 class="text-muted"><i class="fa-solid fa-box-open me-2"></i>Chưa có bánh nào trên kệ hôm nay!</h5>
+      </div>
+    </div>
+  </div>
+
+  <div class="cart-area">
+    <div class="cart-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-bold">Hóa Đơn Mới</h5>
+      <button class="btn btn-sm btn-outline-danger" onclick="clearCart()"><i class="fa-solid fa-trash-can"></i> Xóa hết</button>
+    </div>
+
+    <div class="cart-items" id="cartList">
+    </div>
+
+    <div class="cart-footer shadow-lg">
+      <div class="total-row">
+        <span>Tổng cộng:</span>
+        <span id="totalPrice">0đ</span>
+      </div>
+      <button class="btn btn-info text-white btn-checkout" onclick="checkout()">
+        <i class="fa-solid fa-money-check-dollar me-2"></i>THANH TOÁN LƯU ĐƠN
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let cart = {};
+
+  const formatMoney = (amount) => {
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  };
+
+  // 1. Hàm xử lý khi click vào thẻ bánh
+  function handleCardClick(element) {
+      const id = element.getAttribute('data-id');
+      const name = element.getAttribute('data-name');
+      const price = parseFloat(element.getAttribute('data-price'));
+      const maxStock = parseInt(element.getAttribute('data-stock'));
+
+      if (maxStock <= 0) {
+          Swal.fire('Hết hàng', 'Sản phẩm này hiện đã hết hàng trên kệ!', 'error');
+          return;
+      }
+
+      addToCart(id, name, price, maxStock);
+  }
+
+  // 2. Hàm thêm vào giỏ hàng (Có check tồn kho)
+  function addToCart(id, name, price, maxStock) {
+      if (cart[id]) {
+          if (cart[id].qty >= maxStock) {
+              Swal.fire('Vượt quá số lượng', `Sản phẩm này chỉ còn ${maxStock} cái trong kho!`, 'warning');
+              return;
+          }
+          cart[id].qty++;
+      } else {
+          cart[id] = { id: id, name: name, price: price, qty: 1, maxStock: maxStock };
+      }
+      renderCart();
+  }
+
+  // 3. Cập nhật số lượng (Có check tồn kho khi bấm nút +)
+  function updateQty(id, change) {
+      if (cart[id]) {
+          const newQty = cart[id].qty + change;
+
+          if (change > 0 && newQty > cart[id].maxStock) {
+              Swal.fire('Hết hàng', 'Không thể thêm vì đã đạt giới hạn tồn kho!', 'warning');
+              return;
+          }
+
+          cart[id].qty = newQty;
+          if (cart[id].qty <= 0) {
+              delete cart[id];
+          }
+          renderCart();
+      }
+  }
+
+  function clearCart() {
+      cart = {};
+      renderCart();
+  }
+
+  function renderCart() {
+      const cartList = document.getElementById('cartList');
+      const totalEl = document.getElementById('totalPrice');
+
+      if (Object.keys(cart).length === 0) {
+          cartList.innerHTML = `<div class="text-center text-muted mt-5">
+              <i class="fa-solid fa-cart-arrow-down fa-3x mb-3 opacity-50"></i>
+              <p>Chưa có bánh nào được chọn.</p>
+          </div>`;
+          totalEl.innerText = '0đ';
+          return;
+      }
+
+      let html = '';
+      let total = 0;
+
+      for (let id in cart) {
+          let item = cart[id];
+          let itemTotal = item.price * item.qty;
+          total += itemTotal;
+
+          html += `
+          <div class="cart-item">
+              <div style="flex: 2;">
+                  <div class="fw-bold">${item.name}</div>
+                  <small class="text-muted">${formatMoney(item.price)}</small>
+              </div>
+              <div class="qty-control mx-2">
+                  <button class="qty-btn" onclick="updateQty('${id}', -1)">-</button>
+                  <input type="text" class="qty-input" value="${item.qty}" readonly>
+                  <button class="qty-btn text-success" onclick="updateQty('${id}', 1)">+</button>
+              </div>
+              <div class="text-end fw-bold" style="flex: 1;">${formatMoney(itemTotal)}</div>
+          </div>`;
+      }
+
+      cartList.innerHTML = html;
+      totalEl.innerText = formatMoney(total);
+  }
+
+  // Hàm tìm kiếm sản phẩm nhanh (Live Search)
+  function searchProducts() {
+      let input = document.getElementById('searchInput').value.toLowerCase();
+      let items = document.getElementsByClassName('product-item');
+
+      for (let i = 0; i < items.length; i++) {
+          let name = items[i].querySelector('.product-name').innerText.toLowerCase();
+          if (name.includes(input)) {
+              items[i].style.display = "";
+          } else {
+              items[i].style.display = "none";
+          }
+      }
+  }
+
+  function checkout() {
+      if (Object.keys(cart).length === 0) {
+          Swal.fire('Lỗi', 'Giỏ hàng đang trống!', 'warning');
+          return;
+      }
+      Swal.fire('Thành công', 'Đơn hàng đã được lưu và trừ tồn kho!', 'success');
+      clearCart();
+  }
+
+  // Khởi tạo giỏ hàng trống khi load trang
+  window.onload = renderCart;
+</script>
+</body>
+</html>
