@@ -1,3 +1,81 @@
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const suggestionsBox = document.getElementById('searchSuggestions');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+
+        if (query.length === 0) {
+            suggestionsBox.classList.add('d-none');
+            return;
+        }
+
+        // Đợi 300ms sau khi người dùng ngừng gõ mới gọi API
+        debounceTimer = setTimeout(() => {
+            // Gọi API đến Backend để lấy danh sách sản phẩm
+            fetch(` /search?keyword=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Lỗi mạng');
+                    return response.json();
+                })
+                .then(products => {
+                    suggestionsBox.innerHTML = '';
+
+                    if (products.length > 0) {
+                        // Thay thế đoạn JS hiển thị cũ bằng đoạn này:
+                        products.forEach(product => {
+                            // Lấy URL ảnh trực tiếp từ JSON do Backend đã xử lý
+                            const imgUrl = `/img/${product.imageUrl}`;
+
+                            // Format giá tiền
+                            const formattedPrice = new Intl.NumberFormat('vi-VN').format(product.price);
+
+                            const item = document.createElement('div');
+                            item.className = 'd-flex align-items-center p-2 border-bottom text-dark search-item';
+                            item.style.cursor = 'pointer';
+
+                            // Gắn sự kiện onclick gọi hàm loadProductDetail
+                            item.onclick = function() {
+                                loadProductDetail(product.productId);
+                                document.getElementById('searchSuggestions').classList.add('d-none');
+                                document.getElementById('searchInput').value = '';
+                            };
+
+                            // Render HTML (vẫn giữ onerror để phòng hờ)
+                            item.innerHTML = `
+        <img src="${imgUrl}" alt="${product.name}" 
+             onerror="this.src='/img/chocolate-chip-cake0008choc-AAA.webp'"
+             style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" 
+             class="me-3 shadow-sm">
+        <div>
+            <h6 class="mb-1 fw-bold" style="font-size: 14px;">${product.name}</h6>
+            <span class="text-pink fw-bold" style="font-size: 13px;">${formattedPrice} VND</span>
+        </div>
+    `;
+                            suggestionsBox.appendChild(item);
+                        });
+                        suggestionsBox.classList.remove('d-none');
+                    } else {
+                        suggestionsBox.innerHTML = '<div class="p-3 text-center text-muted small">Không tìm thấy sản phẩm nào</div>';
+                        suggestionsBox.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi tìm kiếm:', error);
+                });
+        }, 300);
+    });
+
+    // Tự động ẩn menu gợi ý khi click ra ngoài thanh tìm kiếm
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+            suggestionsBox.classList.add('d-none');
+        }
+    });
+});
+
 function addToCart(productId) {
     fetch(`/api/cart/add?productId=${productId}&quantity=1`, { method: 'POST' })
         .then(res => {
@@ -203,4 +281,82 @@ function changeImage(element) {
 
     mainImage.src = element.src;
 
+}
+
+/**
+ * Thêm hoặc xóa sản phẩm khỏi danh sách yêu thích
+ * @param {number} productId ID của sản phẩm
+ * @param {Event} event Sự kiện click
+ */
+function toggleFavorite(productId, event) {
+    // Ngăn chặn việc click vào trái tim kích hoạt sự kiện click vào thẻ card (nếu có)
+    event.stopPropagation();
+
+    console.log("Đã nhấn trái tim cho sản phẩm ID:", productId);
+
+    // Lấy phần tử biểu tượng trái tim
+    const heartBtn = event.currentTarget;
+    const heartIcon = heartBtn.querySelector('i');
+
+    // Đổi kiểu biểu tượng để hiển thị trạng thái
+    if (heartIcon.classList.contains('far')) { // Nếu đang là outline (chưa yêu thích)
+        heartIcon.classList.remove('far', 'text-muted');
+        heartIcon.classList.add('fas', 'text-danger'); // Đổi sang trái tim đỏ đậm
+
+        // --- BẮT ĐẦU LOGIC BACKEND ---
+        // Ví dụ: gọi một API (fetch/axios) để thêm yêu thích
+        // fetch('/api/favorites/add', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ productId: productId })
+        // })
+        // .then(response => { if(!response.ok) { /* xử lý lỗi, đổi lại icon */ } })
+        // .catch(error => { console.error('Lỗi khi thêm yêu thích:', error); /* đổi lại icon */ });
+        // --- KẾT THÚC LOGIC BACKEND ---
+
+    } else { // Nếu đang là solid (đã yêu thích)
+        heartIcon.classList.remove('fas', 'text-danger');
+        heartIcon.classList.add('far', 'text-muted'); // Đổi lại outline
+
+        // --- BẮT ĐẦU LOGIC BACKEND ---
+        // Ví dụ: gọi một API (fetch/axios) để xóa yêu thích
+        // fetch(`/api/favorites/remove/${productId}`, { method: 'DELETE' })
+        // .then(response => { if(!response.ok) { /* xử lý lỗi, đổi lại icon */ } })
+        // .catch(error => { console.error('Lỗi khi xóa yêu thích:', error); /* đổi lại icon */ });
+        // --- KẾT THÚC LOGIC BACKEND ---
+    }
+}
+
+function submitFeedback(event) {
+    // 1. Ngăn chặn hành vi load lại trang mặc định của form
+    event.preventDefault();
+
+    // 2. Lấy dữ liệu từ form
+    const form = event.target;
+    const formData = new FormData(form);
+    const productId = formData.get('productId');
+
+    // 3. Gửi dữ liệu ngầm lên Backend bằng Fetch API
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => {
+            // Fetch API sẽ tự động bám theo lệnh redirect từ Backend
+            if (response.ok) {
+                // 4. Nếu thành công, gọi lại hàm load popup để cập nhật danh sách feedback mới
+                alert("Cảm ơn bạn đã đánh giá sản phẩm!");
+
+                // Hàm loadProductDetail này là hàm mở modal sản phẩm bạn đã có sẵn ở trang Home
+                if (typeof loadProductDetail === 'function') {
+                    loadProductDetail(productId);
+                }
+            } else {
+                alert("Có lỗi xảy ra khi gửi đánh giá, vui lòng thử lại.");
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi khi gửi feedback:', error);
+            alert("Lỗi kết nối đến máy chủ.");
+        });
 }

@@ -1,9 +1,7 @@
 package bakery.service;
 
-import bakery.entity.Cart;
-import bakery.entity.Order;
-import bakery.entity.OrderDetail;
-import bakery.entity.User;
+import bakery.entity.*;
+import bakery.repository.DailyStockRepository;
 import bakery.repository.OrderDetailRepository;
 import bakery.repository.OrderRepository;
 import bakery.repository.UserRepository;
@@ -17,13 +15,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class OrderServiceImpl {
+public class OrderServiceImpl implements  OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+
+    @Autowired
+    private DailyStockRepository dailyStockRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -34,7 +35,6 @@ public class OrderServiceImpl {
         Order order = new Order();
         order.setUser(user);
         order.setOrderDate(LocalDateTime.now());
-
         if ("COD".equals(paymentMethod)) {
             order.setStatus("UNPAID");
             order.setPayment("CASH");
@@ -47,6 +47,19 @@ public class OrderServiceImpl {
         BigDecimal total = BigDecimal.ZERO;
         List<OrderDetail> details = new ArrayList<>();
         for (Cart item : cartItems) {
+
+            DailyStock stock = dailyStockRepository
+                    .findByProductProductId(item.getProduct().getProductId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tồn kho"));
+
+            if (stock.getAvailableQuantity() < item.getQuantity()) {
+                throw new RuntimeException("Sản phẩm không đủ số lượng trong kho");
+            }
+            stock.setAvailableQuantity(
+                    stock.getAvailableQuantity() - item.getQuantity()
+            );
+            dailyStockRepository.save(stock);
+
             OrderDetail detail = new OrderDetail();
             detail.setOrder(order);
             detail.setProduct(item.getProduct());
@@ -120,5 +133,9 @@ public class OrderServiceImpl {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
         return orderRepository.findByUserId(user.getId());
+    }
+
+    public boolean checkUserPurchasedProduct(Long userId, Long productId) {
+        return orderRepository.hasUserPurchasedProduct(userId, productId);
     }
 }

@@ -22,10 +22,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép tất cả các đường dẫn cơ bản và tài nguyên tĩnh
                         .requestMatchers("/", "/login", "/register", "/error").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/img/**", "/static/**", "/webjars/**").permitAll()
-
-                        // Cho phép API giỏ hàng và đơn hàng (để thực hiện test/thanh toán)
-                        .requestMatchers("/api/cart/**", "/api/order/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/img/**", "/static/**", "/webjars/**")
+                        .permitAll()
+                        .requestMatchers("/api/cart/**", "/api/order/**","/search","/product/{id}/fragment").permitAll()
 
                         // Các yêu cầu khác mới cần đăng nhập
                         .anyRequest().authenticated()

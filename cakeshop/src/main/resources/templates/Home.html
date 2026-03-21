@@ -16,28 +16,57 @@
 <header class="bg-white shadow-sm">
     <div class="container py-3 d-flex justify-content-between align-items-center">
         <div class="logo">🍰 ALI Bakery</div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-pink rounded-pill" onclick="showCartModal()">
+        <div class="d-flex gap-2 align-items-center">
+            <div class="search-box position-relative" style="width: 280px;">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-pink border-end-0 rounded-start-pill text-pink d-flex align-items-center">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control border-pink border-start-0 rounded-end-pill shadow-none"
+                           placeholder="Tìm kiếm bánh..." autocomplete="off">
+                </div>
+
+                <div id="searchSuggestions" class="position-absolute w-100 bg-white shadow rounded-3 mt-1 d-none overflow-hidden"
+                     style="z-index: 1050; max-height: 350px; overflow-y: auto;">
+                </div>
+            </div>
+
+            <button class="btn btn-outline-pink rounded-pill text-nowrap" onclick="showCartModal()">
                 <i class="fas fa-shopping-cart"></i> My cart
             </button>
 
-            <a th:if="${session.user == null}" th:href="@{/login}" class="btn btn-pink rounded-pill">
+            <a th:if="${session.user == null}" th:href="@{/login}" class="btn btn-pink rounded-pill text-nowrap">
                 <i class="fas fa-sign-in-alt"></i> ĐĂNG NHẬP
             </a>
-            <a th:unless="${session.user == null}" th:href="@{/account/profile}" class="btn btn-pink rounded-pill">
+            <a th:unless="${session.user == null}" th:href="@{/account/profile}" class="btn btn-pink rounded-pill text-nowrap">
                 <i class="fas fa-user"></i> MY PROFILE
             </a>
         </div>
     </div>
 
+<!--    <nav class="navbar navbar-expand-lg sticky-top">-->
+<!--        <div class="container">-->
+<!--            <div class="collapse navbar-collapse justify-content-center">-->
+<!--                <ul class="navbar-nav gap-3">-->
+<!--                    <li class="nav-item"><a class="nav-link" th:href="@{/}">Home Page</a></li>-->
+<!--                    <li class="nav-item" th:each="cat : ${categories}">-->
+<!--                        <a class="nav-link" th:href="@{/category/{id}(id=${cat.id})}" th:text="${cat.name}">Tên loại bánh</a>-->
+<!--                    </li>-->
+<!--                    <li class="nav-item"><a class="nav-link" href="#">Blogs</a></li>-->
+<!--                </ul>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </nav>-->
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <div class="collapse navbar-collapse justify-content-center">
                 <ul class="navbar-nav gap-3">
                     <li class="nav-item"><a class="nav-link" th:href="@{/}">Home Page</a></li>
+
                     <li class="nav-item" th:each="cat : ${categories}">
-                        <a class="nav-link" th:href="@{/category/{id}(id=${cat.id})}" th:text="${cat.name}">Tên loại bánh</a>
+                        <a class="nav-link" th:href="@{/category/{name}(name=${cat})}" th:text="${cat}">Tên loại bánh</a>
                     </li>
+
                     <li class="nav-item"><a class="nav-link" href="#">Blogs</a></li>
                 </ul>
             </div>
@@ -68,29 +97,48 @@
                                  style="height: 200px; width: 100%; object-fit: cover;">
                         </div>
 
-                        <div class="card-body pt-0 text-center">
-                            <h6 class="card-title fw-bold" th:text="${product.name}">Tên bánh</h6>
+                        <div class="card-body pt-0">
+                            <h6 class="card-title fw-bold text-center mb-2" th:text="${product.name}">Tên bánh</h6>
 
-                            <div class="rating mb-2 text-warning">
-                    <span th:each="star : ${#numbers.sequence(1, 5)}">
-                        <i class="fas fa-star"></i>
-                    </span>
-                                <small class="text-muted">(5.0)</small>
+                            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                                <div class="price-container">
+                                    <div th:if="${product.discountPercent > 0}" class="d-flex align-items-baseline gap-2">
+                                        <span class="discounted-price text-pink fw-bold fs-5"
+                                              th:text="${#numbers.formatDecimal(product.price * (1.0 - product.discountPercent / 100.0), 0, 'COMMA', 0, 'POINT')} + ' VND'"></span>
+                                        <span class="original-price text-muted text-decoration-line-through small"
+                                              th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></span>
+                                        <span class="discount-label text-danger fw-medium small"
+                                              th:text="${product.discountPercent} + '% OFF'"></span>
+                                    </div>
+                                    <div th:unless="${product.discountPercent > 0}">
+                                        <span class="price text-pink fw-bold fs-5"
+                                              th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-link text-muted p-0 fs-5"
+                                        th:onclick="'toggleFavorite(' + ${product.productId} + ', event)'"
+                                        style="color: #6c757d !important; text-decoration: none; border: none; background: none;">
+                                    <i class="far fa-heart"></i>
+                                </button>
                             </div>
 
-                            <p class="price text-pink fw-bold"
-                               th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></p>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-star text-warning"></i>
+                                <span class="ms-1" th:text="${product.averageRating == 0.0 ? '0.0' : #numbers.formatDecimal(product.averageRating, 1, 1)} + ' (' + ${product.reviewCount} + ')'">
+                                    4.8 (120)
+                                </span>
+                            </div>
                         </div>
 
-                        <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center pb-3">
+                        <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center pb-3 pt-0 px-3">
                             <button type="button" class="btn btn-outline-pink btn-sm rounded-circle"
-                                    th:onclick="'addToCart(' + ${product.productId} + ')'">
+                                    th:onclick="'addToCart(' + ${product.productId} + ')'" title="Thêm vào giỏ">
                                 <i class="fas fa-cart-plus"></i>
                             </button>
 
-                            <button class="btn btn-pink btn-sm px-3 rounded-pill"
+                            <button class="btn btn-pink btn-sm px-4 rounded-pill fw-medium"
                                     th:onclick="'loadProductDetail(' + ${product.productId} + ')'">
-                                    Đặt ngay
+                                Đặt ngay
                             </button>
                         </div>
                     </div>

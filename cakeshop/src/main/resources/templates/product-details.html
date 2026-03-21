@@ -27,10 +27,11 @@
                 Cake Name
             </div>
             <div class="rating">
-                ⭐ 4.5 (1.3K Reviews)
+                ⭐ <span th:text="${averageRating != null ? #numbers.formatDecimal(averageRating, 1, 1) : '0.0'}">4.5</span>
+                (<span th:text="${feedbacks != null ? feedbacks.size() : 0}">1300</span> Reviews)
             </div>
             <h2 class="price">
-                ₹<span th:text="${product.price}"></span>
+                VND <span th:text="${#numbers.formatDecimal(product.price * (1.0 - product.discountPercent / 100.0), 0, 'COMMA', 0, 'POINT')}"></span>
             </h2>
             <p th:text="${product.description}"></p>
             <div class="description"
@@ -49,49 +50,61 @@
             <p>⏱ Earliest Delivery: 2-3 Hrs</p>
             <button class="buy-btn"
                     th:onclick="'addToCart(' + ${product.productId} + ')'">
-                Buy Now | VND <span th:text="${product.price}"></span>
+                Buy Now | VND <span th:text="${#numbers.formatDecimal(product.price * (1.0 - product.discountPercent / 100.0), 0, 'COMMA', 0, 'POINT')}"></span>
             </button>
         </div>
     </div>
     <!-- REVIEWS SECTION -->
     <div class="review-section">
         <h2>Customer Reviews</h2>
-        <!-- Tổng quan rating -->
+
         <div class="review-summary">
-            <h3>⭐ 4.5 / 5</h3>
-            <p>Based on 1.3K reviews</p>
+            <h3>
+                ⭐ <span th:text="${averageRating != null ? #numbers.formatDecimal(averageRating, 1, 1) : '0.0'}">4.5</span> / 5
+            </h3>
+            <p>Based on <span th:text="${feedbacks != null ? feedbacks.size() : 0}">0</span> reviews</p>
         </div>
-        <!-- Danh sách feedback -->
-        <div class="review-list">
-            <div class="review-item" >
+
+        <div class="review-list" th:if="${feedbacks != null and !feedbacks.isEmpty()}">
+            <div class="review-item" th:each="fb : ${feedbacks}">
                 <div class="review-header">
-                    <strong >User Name</strong>
-                    <span class="stars" >⭐⭐⭐⭐⭐</span>
+                    <strong th:text="${fb.user.name}">User Name</strong>
+                    <span class="stars" th:text="${'⭐'.repeat(fb.rating)}">⭐⭐⭐⭐⭐</span>
                 </div>
-                <p class="review-content" >
+                <p class="review-content" th:text="${fb.content}">
                     Very delicious cake!
                 </p>
-                <small >
+                <small th:text="${#temporals.format(fb.createdAt, 'dd/MM/yyyy HH:mm')}">
                     01/01/2026
                 </small>
             </div>
         </div>
-        <!-- Form thêm đánh giá -->
-        <div class="review-form">
+
+        <div th:if="${feedbacks == null or feedbacks.isEmpty()}">
+            <p style="color: #666; font-style: italic;">Sản phẩm chưa có đánh giá nào.</p>
+        </div>
+
+        <div class="review-form" th:if="${canReview}">
             <h3>Write a Review</h3>
-            <form >
-                <input type="hidden" name="productId" />
+            <form th:action="@{/api/feedbacks/add}" method="POST" onsubmit="submitFeedback(event)">
+                <input type="hidden" name="productId" th:value="${product.productId}" />
                 <label>Rating:</label>
-                <select name="rating">
-                    <option value="5">⭐⭐⭐⭐⭐</option>
-                    <option value="4">⭐⭐⭐⭐</option>
-                    <option value="3">⭐⭐⭐</option>
-                    <option value="2">⭐⭐</option>
-                    <option value="1">⭐</option>
+                <select name="rating" required>
+                    <option value="5">★★★★★</option>
+                    <option value="4">★★★★</option>
+                    <option value="3">★★★</option>
+                    <option value="2">★★</option>
+                    <option value="1">★</option>
                 </select>
-                <textarea name="comment" placeholder="Write your feedback..." required></textarea>
+                <textarea name="content" placeholder="Write your feedback..." required></textarea>
                 <button type="submit">Submit Review</button>
             </form>
+        </div>
+
+        <div class="review-form" th:unless="${canReview}">
+            <p style="color: #d81b60; font-weight: 500;">
+                <i class="fas fa-info-circle"></i> Bạn chỉ có thể đánh giá sau khi đã mua và nhận sản phẩm này thành công.
+            </p>
         </div>
     </div>
 </div>

@@ -28,12 +28,14 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-    @NotNull(message = "Loại bánh không được để trống")
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    @JsonIgnore
-    private Category category;
-
+//    @NotNull(message = "Loại bánh không được để trống")
+//    @ManyToOne
+//    @JoinColumn(name = "category_id")
+//    @JsonIgnore
+//    private Category category;
+    @NotBlank(message = "Loại bánh không được để trống")
+    @Column(name = "category", nullable = false)
+    private String category;
 
     @NotNull(message = "Giá bán không được để trống")
     @DecimalMin(value = "999.0", inclusive = false, message = "Giá bán phải lớn hơn 1000")
@@ -58,6 +60,34 @@ public class Product {
     @JsonIgnore
     private List<ProductImage> images = new ArrayList<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Recipe> recipes = new ArrayList<>();
+
+    // Ánh xạ danh sách Feedback (nếu bạn chưa có)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Feedback> feedbacks = new ArrayList<>();
+
+    // Hàm lấy tổng số lượt đánh giá
+    @Transient // Đánh dấu đây không phải là cột trong database
+    public int getReviewCount() {
+        return feedbacks != null ? feedbacks.size() : 0;
+    }
+
+    // Hàm tính điểm đánh giá trung bình
+    @Transient
+    public double getAverageRating() {
+        if (feedbacks == null || feedbacks.isEmpty()) {
+            return 0.0;
+        }
+        double sum = 0;
+        for (Feedback fb : feedbacks) {
+            sum += fb.getRating();
+        }
+        return sum / feedbacks.size();
+    }
+
     // Method tiện lợi (giữ nguyên nếu có)
     public ProductImage getMainImage() {
         return images.stream()
@@ -65,10 +95,6 @@ public class Product {
                 .findFirst()
                 .orElse(images.isEmpty() ? null : images.get(0));
     }
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<Recipe> recipes = new ArrayList<>();
-
     public List<Recipe> getRecipes() {
         return recipes;
     }

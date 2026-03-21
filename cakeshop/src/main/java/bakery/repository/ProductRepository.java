@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
+
     List<Product> findByNameContainingIgnoreCase(String name);
     List<Product> findByCategory(String category);
     List<Product> findByNameContainingIgnoreCaseAndCategory(String name, String category);
+    List<Product> findTop5ByNameContainingIgnoreCase(String name);
     List<Product> findByNameIgnoreCase(String name); // Dùng để check trùng tên lúc thêm mới
     // 1. Tìm theo Tên + Phân trang
     Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
@@ -27,11 +29,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.images")
     List<Product> findAllWithImages();
 
-    List<Product> findByCategory_Id(Long id);
-    @Query("""
-    SELECT DISTINCT p FROM Product p
-    LEFT JOIN FETCH p.images
-    WHERE p.category.id = :id
-    """)
-    List<Product> findByCategoryWithImages(@Param("id") Long id);
+//    List<Product> findByCategory_Id(Long id);
+//    @Query("""
+//    SELECT DISTINCT p FROM Product p
+//    LEFT JOIN FETCH p.images
+//    WHERE p.category.id = :id
+//    """)
+
+    // Lấy danh sách các tên Category không trùng lặp để làm Menu
+    @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL")
+    List<String> findDistinctCategories();
+
+    // Lọc sản phẩm theo Category (String)
+    List<Product> findByCategoryIgnoreCase(String category);
+
+//    List<Product> findByCategoryWithImages(@Param("id") Long id);
+    @Query("SELECT p FROM Product p JOIN FETCH p.images WHERE p.category = :category")
+    List<Product> findByCategoryWithImages(@Param("category") String category);
+
+    Product findByProductId(Long productId);
 }

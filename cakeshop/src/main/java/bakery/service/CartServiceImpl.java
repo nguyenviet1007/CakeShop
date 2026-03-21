@@ -11,6 +11,8 @@ import bakery.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -83,13 +85,19 @@ public class CartServiceImpl {
             newCart.setProduct(product);
             newCart.setQuantity(quantity);
 
+            // Lấy % giảm giá, nếu null thì mặc định là 0 để tránh lỗi
+            int discountPercent = (product.getDiscountPercent() != null) ? product.getDiscountPercent() : 0;
+
+            // Tính hệ số nhân
+            BigDecimal multiplier = BigDecimal.valueOf(100 - discountPercent)
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
             // Lưu giá tại thời điểm thêm vào
-            newCart.setPrice(product.getPrice());
+            newCart.setPrice(product.getPrice().multiply(multiplier));
 
             cartRepository.save(newCart);
         }
     }
-
     // Logic cho nút + và - trong mockup giỏ hàng
     public void updateQuantity(Long cartId, Integer newQuantity) {
         if (newQuantity <= 0) {

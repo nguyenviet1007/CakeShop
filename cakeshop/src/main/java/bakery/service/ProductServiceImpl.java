@@ -270,8 +270,8 @@ public class ProductServiceImpl implements ProductService {
                 .orElse(product.getImages().isEmpty() ? "/img/default.jpg" : product.getImages().get(0).getImageUrl());
     }
 
-    public List<Product> findByCategoryId(Long categoryId) {
-        return productRepository.findByCategory_Id(categoryId);
-    }
+//    public List<Product> findByCategoryId(Long categoryId) {
+//        return productRepository.findByCategory_Id(categoryId);
+//    }
 
 }
