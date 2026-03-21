@@ -1,11 +1,15 @@
 package bakery.service;
 
+
 import bakery.entity.Product;
 import bakery.entity.ProductImage;
 import bakery.entity.Recipe;
+import bakery.repository.DailyStockRepository;
+import bakery.repository.OrderDetailRepository;
 import bakery.repository.ProductRepository;
 import bakery.service.ProductService;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +29,11 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final String UPLOAD_DIR = "uploads/";
+    @Autowired
+    private DailyStockRepository dailyStockRepository;
+
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
 
     public ProductServiceImpl(ProductRepository productRepository) {
         this.productRepository = productRepository;
@@ -193,7 +202,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional // BẮT BUỘC CÓ: Để đảm bảo nếu xóa lỗi ở đâu thì nó sẽ rollback lại toàn bộ
     public void delete(Long id) {
+
+        // 1. Dọn dẹp tất cả các ngày tồn kho có chứa bánh này
+        dailyStockRepository.deleteByProduct_ProductId(id);
+
+        // 2. Dọn dẹp tất cả các chi tiết hóa đơn mà khách từng mua bánh này
+        orderDetailRepository.deleteByProduct_ProductId(id);
+
+        // 3. Cuối cùng, tiêu diệt tận gốc cái bánh này trong bảng Product
         productRepository.deleteById(id);
     }
 
@@ -250,28 +268,11 @@ public class ProductServiceImpl implements ProductService {
         // Spring Data JPA sẽ tự động nhận diện thay đổi và update Database
         productRepository.save(product);
     }
-
-    public List<Product> getAllProducts() {
-        return productRepository.findAllWithImages();
+    public List<String> getAllCategories() {
+        return productRepository.findAllDistinctCategories();
     }
 
-    public Product getProductById(Long id) {
-        return productRepository.findByIdWithImages(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
-    }
 
-    // Hàm bổ trợ lấy URL ảnh chính
-    public String getMainImageUrl(Product product) {
-        if (product.getImages() == null) return "/img/default.jpg";
-        return product.getImages().stream()
-                .filter(ProductImage::isMain)
-                .map(ProductImage::getImageUrl)
-                .findFirst()
-                .orElse(product.getImages().isEmpty() ? "/img/default.jpg" : product.getImages().get(0).getImageUrl());
-    }
-
-//    public List<Product> findByCategoryId(Long categoryId) {
-//        return productRepository.findByCategory_Id(categoryId);
-//    }
 
 }
+

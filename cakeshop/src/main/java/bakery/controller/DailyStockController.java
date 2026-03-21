@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -41,15 +42,20 @@ public class DailyStockController {
         List<Product> products = productService.getAll();
         List<DailyStock> stocks = dailyStockService.getStockByDate(date);
 
-        // ĐỔI TỪ Map<Long, Integer> SANG Map<Long, DailyStock>
         Map<Long, DailyStock> stockMap = new HashMap<>();
         for (DailyStock stock : stocks) {
             stockMap.put(stock.getProduct().getProductId(), stock);
         }
 
+        Set<String> categories = products.stream()
+                .map(Product::getCategory)
+                .filter(cat -> cat != null && !cat.isEmpty())
+                .collect(Collectors.toSet());
+
         model.addAttribute("selectedDate", date);
         model.addAttribute("products", products);
         model.addAttribute("stockMap", stockMap);
+        model.addAttribute("categories", categories); // Gửi sang HTML
 
         return "admin/daily-stock";
     }

@@ -193,7 +193,7 @@
 
 <div class="glass-toolbar d-flex justify-content-between align-items-center shadow-sm">
     <div class="d-flex align-items-center gap-2">
-        <a href="/orders/admin/products" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/admin/products" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
         <h4 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-store text-info me-2"></i>Tủ Bánh</h4>
         <div class="vr mx-2"></div>
         <input type="date" class="form-control fw-bold text-primary border-primary bg-light" id="saleDate" style="max-width: 180px;">
@@ -203,16 +203,24 @@
         <button class="btn btn-info fw-bold text-white px-4" onclick="saveAllStock()">
             <i class="fa-solid fa-cloud-arrow-up me-2"></i>Lưu Đồng Bộ
         </button>
+        <a th:href="@{/admin/pos}" class="btn btn-primary shadow-sm fw-bold">
+            <i class="fa-solid fa-cash-register me-1"></i> Bán Hàng Tại Quầy
+        </a>
     </div>
 </div>
 
 <div class="container-fluid p-4">
 
     <ul class="nav nav-pills mb-4" id="categoryTabs">
-        <li class="nav-item"><button class="nav-link active" data-filter="all">🌟 Tất cả bánh</button></li>
-        <li class="nav-item"><button class="nav-link" data-filter="Bánh Mì">🥖 Bánh Mì</button></li>
-        <li class="nav-item"><button class="nav-link" data-filter="Bánh Ngọt">🧁 Bánh Ngọt</button></li>
-        <li class="nav-item"><button class="nav-link" data-filter="Bánh Lạnh">🍰 Bánh Lạnh</button></li>
+        <li class="nav-item">
+            <button class="nav-link active" data-category="all" onclick="filterDaily(this)">🌟 Tất cả</button>
+        </li>
+        <li class="nav-item" th:each="cat : ${categories}">
+            <button class="nav-link"
+                    th:data-category="${cat}"
+                    th:text="${cat}"
+                    onclick="filterDaily(this)"></button>
+        </li>
     </ul>
 
     <div class="row g-4" id="productGrid">
@@ -515,6 +523,27 @@
             }
         });
     }
+function filterDaily(element) {
+    // 1. Đổi trạng thái Active cho nút bấm (đã chạy tốt)
+    document.querySelectorAll('#categoryTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+    element.classList.add('active');
+
+    // 2. Lấy giá trị lọc từ thuộc tính data-category
+    const selectedCategory = element.getAttribute('data-category');
+
+    // 3. Thực hiện ẩn hiện các thẻ sản phẩm
+    const items = document.querySelectorAll('.filter-item');
+
+    items.forEach(item => {
+        const itemCat = item.getAttribute('data-category');
+
+        if (selectedCategory === 'all' || itemCat === selectedCategory) {
+            item.style.display = ""; // Hiện thẻ bánh phù hợp
+        } else {
+            item.style.display = "none"; // Ẩn thẻ bánh không phù hợp
+        }
+    });
+}
 </script>
 </body>
 </html>

@@ -13,4 +13,8 @@ public class IngredientDTO {
     private BigDecimal minQuantity;
     private String note;
 
+    private BigDecimal quantityInput;  // Số lượng thùng/bao nhập vào (VD: 2)
+    private String unitName;           // Tên đơn vị nhập (VD: "Thùng")
+    private BigDecimal conversionRate;  // Hệ số quy đổi (VD: 8500)
+
 }

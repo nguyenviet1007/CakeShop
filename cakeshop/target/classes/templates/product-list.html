@@ -162,13 +162,10 @@
                     <p class="text-muted mb-0">Quản lý danh sách bánh trong cửa hàng</p>
                 </div>
                 <div class="d-flex align-items-center">
-                    <div class="text-end me-3 d-none d-sm-block">
-                        <span class="d-block fw-bold text-dark">Admin</span>
-                        <small class="text-muted">online</small>
-                    </div>
-                    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 45px; height: 45px;">
-                        AD
-                    </div>
+                    <a th:href="@{/admin/daily-stock}" class="btn btn-warning text-white fw-bold shadow-sm d-flex align-items-center gap-2" style="border-radius: 20px; padding: 8px 20px;">
+                        <i class="fa-solid fa-store"></i>
+                        <span class="d-none d-sm-inline">Quản Lý Tủ Bánh</span>
+                    </a>
                 </div>
             </div>
 
@@ -189,9 +186,12 @@
                         <label class="form-label text-muted small fw-bold mb-1">Danh mục</label>
                         <select class="form-select" name="category">
                             <option value="">Tất cả</option>
-                            <option value="Bánh Kem" th:selected="${param.category == 'Bánh Kem'}">Bánh Kem</option>
-                            <option value="Bánh Mì" th:selected="${param.category == 'Bánh Mì'}">Bánh Mì</option>
-                            <option value="Cookie" th:selected="${param.category == 'Cookie'}">Cookie</option>
+
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat}"
+                                    th:text="${cat}"
+                                    th:selected="${#strings.equals(param.category, cat)}">
+                            </option>
                         </select>
                     </div>
 
@@ -273,7 +273,7 @@
                 </nav>
             </div>
             </div>
-    </div>
+    
 
     </main>
 </div>

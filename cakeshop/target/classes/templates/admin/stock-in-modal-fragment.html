@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="details" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-boxes-stacked me-2"></i>
+                    Chi Tiết Nhập Kho: <span th:text="${ingredient.name}"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light text-center">
+                        <tr>
+                            <th>Ngày nhập</th>
+                            <th>Số lượng</th>
+                            <th>Đơn vị nhập</th>
+                            <th>Quy đổi</th>
+                            <th>Tổng vào kho</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${stockInList}" class="text-center">
+                            <td th:text="${#temporals.format(item.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td class="fw-bold text-success" th:text="${item.quantityInput}"></td>
+                            <td th:text="${item.unitName}"></td>
+                            <td th:text="${'x ' + item.conversionRate}"></td>
+                            <td class="fw-bold text-primary">
+                                <span th:text="${item.quantityBase}"></span>
+                                <small th:text="${ingredient.unit}"></small>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(stockInList)}">
+                            <td colspan="5" class="text-center text-muted">Chưa có lịch sử nhập chi tiết bằng đơn vị quy đổi.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

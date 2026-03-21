@@ -190,6 +190,11 @@
                                         onclick="loadHistory(this.getAttribute('data-id'), this.getAttribute('data-name'))">
                                     <i class="fa-solid fa-history"></i> Lịch sử
                                 </button>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        th:onclick="|openStockInModal(${ing.ingredientId})|"
+                                        title="Chi tiết phiếu nhập">
+                                    <i class="fa-solid fa-file-invoice"></i>
+                                </button>
                                 <a th:href="@{/admin/ingredients/delete/{id}(id=${ing.ingredientId})}" class="btn btn-sm btn-danger"
                                    onclick="xoaNguyenLieu(event, this);">
                                     <i class="fa-solid fa-trash"></i> Xóa
@@ -305,7 +310,38 @@
                   modalContent.innerHTML = '<div class="alert alert-danger m-3">Lỗi tải dữ liệu!</div>';
               });
       }
+  function openStockInModal(id) {
+      // Gọi AJAX lấy fragment HTML từ Controller
+      fetch('/admin/ingredients/stock-in-details/' + id)
+          .then(response => {
+              if (!response.ok) throw new Error('Không có dữ liệu nhập kho chi tiết');
+              return response.text();
+          })
+          .then(html => {
+              // Tạo một div tạm để chứa modal fragment
+              const container = document.createElement('div');
+              container.id = 'temp-modal-container';
+              container.innerHTML = html;
+              document.body.appendChild(container);
 
+              // Khởi tạo và hiển thị Modal (Phải có Bootstrap JS)
+              const modalElem = container.querySelector('.modal');
+              const modal = new bootstrap.Modal(modalElem);
+              modal.show();
+
+              // Tự xóa khỏi DOM khi đóng modal để tránh nặng trang
+              modalElem.addEventListener('hidden.bs.modal', () => {
+                  container.remove();
+              });
+          })
+          .catch(error => {
+              Swal.fire({
+                  icon: 'info',
+                  title: 'Thông báo',
+                  text: 'Nguyên liệu này chưa có lịch sử nhập hàng chi tiết (phiếu nhập).'
+              });
+          });
+  }
       // 2. Hàm Xử lý LƯU (Quan trọng nhất - Đây là cái bạn đang thiếu)
       function submitModalForm() {
           var form = document.getElementById('modalForm');
@@ -414,7 +450,9 @@
             });
         }
     });
+
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>

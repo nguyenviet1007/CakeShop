@@ -49,7 +49,7 @@ public class OrderServiceImpl implements  OrderService {
         for (Cart item : cartItems) {
 
             DailyStock stock = dailyStockRepository
-                    .findByProductProductId(item.getProduct().getProductId())
+                    .findByProduct_ProductId(item.getProduct().getProductId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy tồn kho"));
 
             if (stock.getAvailableQuantity() < item.getQuantity()) {

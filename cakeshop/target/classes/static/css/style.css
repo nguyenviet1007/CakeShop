@@ -96,3 +96,27 @@ body {
     margin-right: 15px;
     color: var(--dark-pink);
 }
+
+.border-pink {
+    border-color: #e83e8c !important;
+}
+.search-item {
+    transition: background-color 0.2s ease;
+}
+.search-item:hover {
+    background-color: #f8f9fa;
+}
+
+.input-group-text {
+    height: 50px;
+    margin-top: 5px;
+    padding: 0 12px;
+}
+
+.form-control {
+    height: 50px;
+}
+
+.input-group {
+    overflow: hidden;
+}

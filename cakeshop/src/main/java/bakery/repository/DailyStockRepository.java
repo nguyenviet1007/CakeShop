@@ -2,7 +2,9 @@ package bakery.repository;
 
 import bakery.entity.DailyStock;
 import bakery.entity.Product;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -19,4 +21,9 @@ public interface DailyStockRepository extends JpaRepository<DailyStock, Long> {
 
     // Tìm số lượng của 1 loại bánh cụ thể trong 1 ngày
     Optional<DailyStock> findByProduct_ProductIdAndDate(Long productId, LocalDate date);
+    // Đổi từ List<DailyStock> thành Optional<DailyStock>
+    Optional<DailyStock> findByProduct_ProductId(Long productId);    @Transactional
+    @Modifying
+    void deleteByProduct_ProductId(Long productId);
+
 }

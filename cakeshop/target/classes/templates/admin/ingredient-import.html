@@ -46,9 +46,11 @@
                     <thead class="table-light">
                     <tr>
                         <th style="width: 5%" class="text-center">STT</th>
-                        <th style="width: 50%">Tên Nguyên Liệu</th>
-                        <th style="width: 15%" class="text-center">Đơn vị</th>
-                        <th style="width: 25%">Số lượng nhập thêm</th>
+                        <th style="width: 30%">Tên Nguyên Liệu</th>
+                        <th style="width: 15%">Số lượng nhập</th>
+                        <th style="width: 15%">Đơn vị nhập</th>
+                        <th style="width: 15%">Quy đổi (g/ml)</th>
+                        <th style="width: 15%" class="text-end">Tổng quy đổi</th>
                         <th style="width: 5%"></th>
                     </tr>
                     </thead>
@@ -65,14 +67,20 @@
                                 </th:block>
                             </select>
                         </td>
-                        <td><input type="text" class="form-control bg-light text-center unit-display border-0" readonly></td>
-
                         <td>
-                            <input type="number" class="form-control qty-input" min="0.01" step="0.01" placeholder="0" required>
+                            <input type="number" class="form-control qty-input" oninput="calculateTotal(this)" min="0.01" step="0.01" placeholder="Số lượng" required>
                         </td>
-
+                        <td>
+                            <input type="text" class="form-control unit-input" placeholder="Thùng/Bao...">
+                        </td>
+                        <td>
+                            <input type="number" class="form-control conv-input" oninput="calculateTotal(this)" min="1" placeholder="1 thùng = ? g" required>
+                        </td>
+                        <td class="text-end fw-bold text-primary px-3">
+                            <span class="total-base">0</span> <small class="base-unit-text"></small>
+                        </td>
                         <td class="text-center">
-                            <i class="fa-solid fa-trash-can fs-5 btn-remove cursor-pointer" onclick="removeRow(this)" style="cursor: pointer;"></i>
+                            <i class="fa-solid fa-trash-can fs-5 btn-remove" onclick="removeRow(this)" style="cursor: pointer;"></i>
                         </td>
                     </tr>
                     </tbody>
@@ -101,41 +109,30 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <script>
-    // 1. Tự động điền đơn vị khi chọn nguyên liệu
+    // 1. Tự động điền đơn vị cơ sở khi chọn nguyên liệu
     function updateUnit(selectElement) {
-        // Lấy option đang được chọn
         const selectedOption = selectElement.options[selectElement.selectedIndex];
-        // Lấy data-unit
         const unit = selectedOption.getAttribute('data-unit');
-        // Tìm ô input unit trong cùng dòng
         const row = selectElement.closest('tr');
-        row.querySelector('.unit-display').value = unit || '';
+        row.querySelector('.base-unit-text').innerText = unit || '';
+        calculateTotal(selectElement); // Tính toán lại nếu chọn lại nguyên liệu
     }
 
-    // 2. Xóa dòng
-    function removeRow(element) {
-        const tableBody = document.getElementById('inputTable');
-        if (tableBody.rows.length > 1) {
-            element.closest('tr').remove();
-            updateCount(); // Cập nhật lại số thứ tự
-        } else {
-            // Dùng Toast nhỏ của SweetAlert
-            const Toast = Swal.mixin({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
-            });
-            Toast.fire({ icon: 'warning', title: 'Phải có ít nhất 1 dòng nhập liệu' });
-        }
+    // 2. Hàm tính toán nhanh để nhân viên thấy kết quả quy đổi
+    function calculateTotal(element) {
+        const row = element.closest('tr');
+        const qty = row.querySelector('.qty-input').value || 0;
+        const conv = row.querySelector('.conv-input').value || 1;
+        const total = (parseFloat(qty) * parseFloat(conv)).toFixed(2);
+        row.querySelector('.total-base').innerText = total;
     }
 
-    // 3. Thêm dòng mới
+    // 3. Thêm dòng mới (Phải sửa template HTML bên trong JS)
     function addRow() {
         const table = document.getElementById('inputTable');
+        const optionsHtml = document.getElementById('ingredientOptions').innerHTML;
         const newRow = table.insertRow();
         newRow.className = "import-row";
-
-        // Lấy HTML options từ template ẩn
-        const optionsHtml = document.getElementById('ingredientOptions').innerHTML;
-
         newRow.innerHTML = `
             <td class="text-center text-muted index"></td>
             <td>
@@ -143,26 +140,34 @@
                     ${optionsHtml}
                 </select>
             </td>
-            <td><input type="text" class="form-control bg-light text-center unit-display border-0" readonly></td>
-            <td>
-                <input type="number" class="form-control qty-input" min="0.01" step="0.01" placeholder="0" required>
+            <td><input type="number" class="form-control qty-input" oninput="calculateTotal(this)" min="0.01" step="0.01" required></td>
+            <td><input type="text" class="form-control unit-input" placeholder="Đơn vị nhập"></td>
+            <td><input type="number" class="form-control conv-input" oninput="calculateTotal(this)" min="1" placeholder="Quy đổi"></td>
+            <td class="text-end fw-bold text-primary px-3">
+                <span class="total-base">0</span> <small class="base-unit-text"></small>
             </td>
             <td class="text-center">
-                <i class="fa-solid fa-trash-can fs-5 btn-remove cursor-pointer" onclick="removeRow(this)" style="cursor: pointer;"></i>
+                <i class="fa-solid fa-trash-can fs-5 btn-remove" onclick="removeRow(this)" style="cursor: pointer;"></i>
             </td>
         `;
         updateCount();
     }
 
-    // 4. Cập nhật STT (1, 2, 3...)
+    function removeRow(element) {
+        const tableBody = document.getElementById('inputTable');
+        if (tableBody.rows.length > 1) {
+            element.closest('tr').remove();
+            updateCount();
+        }
+    }
+
     function updateCount() {
-        const rows = document.querySelectorAll('#inputTable tr');
-        rows.forEach((row, index) => {
-            row.querySelector('.index').innerText = index + 1;
+        document.querySelectorAll('#inputTable tr').forEach((row, i) => {
+            row.querySelector('.index').innerText = i + 1;
         });
     }
 
-    // 5. GỬI DỮ LIỆU (QUAN TRỌNG)
+    // 4. GỬI DỮ LIỆU (Cần gửi thêm các trường mới lên Backend)
     function submitImport() {
         const rows = document.querySelectorAll('.import-row');
         let data = [];
@@ -170,52 +175,41 @@
 
         rows.forEach(row => {
             const ingId = row.querySelector('.ingredient-select').value;
-            const qty = row.querySelector('.qty-input').value;
+            const qtyIn = row.querySelector('.qty-input').value; // Số thùng
+            const conv = row.querySelector('.conv-input').value; // Hệ số
+            const unitIn = row.querySelector('.unit-input').value; // Tên đơn vị (thùng)
 
-            // Validate đơn giản
-            if (!ingId || !qty || parseFloat(qty) <= 0) {
+            if (!ingId || !qtyIn || !conv || parseFloat(qtyIn) <= 0) {
                 hasError = true;
                 return;
             }
 
-            // Đóng gói thành object khớp với IngredientDTO
             data.push({
                 ingredientId: parseInt(ingId),
-                quantity: parseFloat(qty),
-                // Các trường name, unit, minQuantity ko cần gửi lên vì Backend tự tra cứu theo ID
+                quantityInput: parseFloat(qtyIn),
+                conversionRate: parseFloat(conv),
+                unitName: unitIn || 'Đơn vị'
             });
         });
 
         if (hasError || data.length === 0) {
-            Swal.fire('Cảnh báo', 'Vui lòng chọn nguyên liệu và nhập số lượng hợp lệ (>0)!', 'warning');
+            Swal.fire('Cảnh báo', 'Vui lòng điền đủ Nguyên liệu, Số lượng và Hệ số quy đổi!', 'warning');
             return;
         }
 
-        // Gọi AJAX
         fetch('/admin/ingredients/import', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(result => {
             if (result.status === 'success') {
-                Swal.fire({
-                    title: 'Thành công!',
-                    text: 'Đã nhập kho xong!',
-                    icon: 'success',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    window.location.href = '/admin/ingredients'; // Quay về trang danh sách
-                });
+                Swal.fire({ title: 'Thành công!', icon: 'success', timer: 1500, showConfirmButton: false })
+                .then(() => window.location.href = '/admin/ingredients');
             } else {
                 Swal.fire('Lỗi', result.message, 'error');
             }
-        })
-        .catch(error => {
-            console.error(error);
-            Swal.fire('Lỗi Server', 'Không thể kết nối!', 'error');
         });
     }
 </script>

@@ -4,8 +4,10 @@ import bakery.dto.request.IngredientDTO;
 import bakery.entity.Ingredient;
 import bakery.entity.IngredientStock;
 import bakery.entity.IngredientStockHistory;
+import bakery.entity.StockIn;
 import bakery.repository.IngredientRepository;
 import bakery.repository.IngredientStockHistoryRepository;
+import bakery.repository.StockInRepository;
 import bakery.service.IngredientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,14 +31,16 @@ public class IngredientController {
     private final IngredientService ingredientService;
     private final IngredientStockHistoryRepository historyRepo;
     private final IngredientRepository ingredientRepository;
+    private final StockInRepository stockInRepo;
 
     public IngredientController(
             IngredientService ingredientService,
             IngredientStockHistoryRepository historyRepo,
-            IngredientRepository ingredientRepository) {
+            IngredientRepository ingredientRepository, StockInRepository stockInRepo) {
         this.ingredientService = ingredientService;
         this.historyRepo = historyRepo;
         this.ingredientRepository = ingredientRepository;
+        this.stockInRepo = stockInRepo;
     }
 
 
@@ -200,6 +204,18 @@ public class IngredientController {
         model.addAttribute("historyList", historyList);
 
         return "admin/ingredient-history";  // Trả full file này
+    }
+    @GetMapping("/stock-in-details/{id}")
+    public String getStockInDetails(@PathVariable Long id, Model model) {
+        Ingredient ingredient = ingredientService.findById(id);
+        // Giả sử bạn đã có stockInRepo được inject vào Controller
+        List<StockIn> stockInList = stockInRepo.findByIngredient_IngredientId(id);
+
+        model.addAttribute("ingredient", ingredient);
+        model.addAttribute("stockInList", stockInList);
+
+        // Trả về file html trong folder templates/admin/
+        return "admin/stock-in-modal-fragment :: details";
     }
 
 

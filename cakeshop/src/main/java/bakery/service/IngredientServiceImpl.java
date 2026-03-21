@@ -4,9 +4,11 @@ import bakery.dto.request.IngredientDTO;
 import bakery.entity.Ingredient;
 import bakery.entity.IngredientStock;
 import bakery.entity.IngredientStockHistory;
+import bakery.entity.StockIn;
 import bakery.repository.IngredientRepository;
 import bakery.repository.IngredientStockHistoryRepository;
 import bakery.repository.IngredientStockRepository;
+import bakery.repository.StockInRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -26,14 +28,16 @@ public class IngredientServiceImpl implements IngredientService {
     private final IngredientRepository ingredientRepo;
     private final IngredientStockRepository stockRepo;
     private final IngredientStockHistoryRepository historyRepo;
-
+    private final StockInRepository stockInRepo; // THÊM DÒNG NÀY
 
     public IngredientServiceImpl(IngredientRepository ingredientRepo,
                                  IngredientStockRepository stockRepo,
-                                 IngredientStockHistoryRepository historyRepo) {
+                                 IngredientStockHistoryRepository historyRepo,
+                                 StockInRepository stockInRepo) { // THÊM VÀO ĐÂY
         this.ingredientRepo = ingredientRepo;
         this.stockRepo = stockRepo;
         this.historyRepo = historyRepo;
+        this.stockInRepo = stockInRepo; // THÊM VÀO ĐÂY
     }
 
     @Override
@@ -84,65 +88,92 @@ public class IngredientServiceImpl implements IngredientService {
     // --- 2. CẬP NHẬT THÔNG TIN ---
     @Override
     public void updateIngredient(Ingredient ingredient) {
-        Ingredient existing = findById(ingredient.getIngredientId());
+        // 1. Tìm bản ghi gốc đang có trong Database (với số lượng tồn kho đúng)
+        Ingredient existing = ingredientRepo.findById(ingredient.getIngredientId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu"));
+
         IngredientStock stock = existing.getStock();
 
-        // Validate
-        if (ingredient.getStock() != null && ingredient.getStock().getMinQuantity() != null) {
-            if (ingredient.getStock().getMinQuantity().compareTo(BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("Ngưỡng cảnh báo không được nhỏ hơn 0!");
-            }
-        }
-        if (!existing.getName().equalsIgnoreCase(ingredient.getName())) {
-            if (ingredientRepo.existsByNameIgnoreCase(ingredient.getName())) {
-                throw new IllegalArgumentException("Tên nguyên liệu '" + ingredient.getName() + "' đã được sử dụng!");
-            }
-        }
-
-        // Tính toán giá trị mới
+        // 2. Lưu lại giá trị cũ để ghi lịch sử
         BigDecimal oldQty = stock.getQuantity();
         BigDecimal oldMin = stock.getMinQuantity();
 
-        BigDecimal newQuantity = (ingredient.getStock() != null && ingredient.getStock().getQuantity() != null)
-                ? ingredient.getStock().getQuantity() : oldQty;
-        BigDecimal newMinQuantity = (ingredient.getStock() != null && ingredient.getStock().getMinQuantity() != null)
-                ? ingredient.getStock().getMinQuantity() : (oldMin != null ? oldMin : BigDecimal.TEN);
+        // 3. Validate tên (giữ nguyên logic của bạn)
+        if (!existing.getName().equalsIgnoreCase(ingredient.getName())) {
+            if (ingredientRepo.existsByNameIgnoreCase(ingredient.getName())) {
+                throw new IllegalArgumentException("Tên nguyên liệu '" + ingredient.getName() + "' đã tồn tại!");
+            }
+        }
 
-        // Cập nhật DB
+        // 4. CHỐT CHẶN TẠI ĐÂY: Chỉ cập nhật Name và Unit
         existing.setName(ingredient.getName());
         existing.setUnit(ingredient.getUnit());
-        stock.setQuantity(newQuantity);
-        stock.setMinQuantity(newMinQuantity);
 
+        // 5. CHỐT CHẶN KHO: Chỉ cập nhật minQuantity nếu có gửi lên
+        BigDecimal newMinQuantity = oldMin;
+        if (ingredient.getStock() != null && ingredient.getStock().getMinQuantity() != null) {
+            newMinQuantity = ingredient.getStock().getMinQuantity();
+            if (newMinQuantity.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Ngưỡng cảnh báo không được nhỏ hơn 0!");
+            }
+        }
+
+        // QUAN TRỌNG: Tuyệt đối không lấy quantity từ object 'ingredient' truyền vào
+        // newQuantity LUÔN LUÔN = oldQty (Giá trị hiện tại trong DB)
+        BigDecimal newQuantity = oldQty;
+
+        // 6. Cập nhật vào đối tượng quản lý bởi Hibernate
+        stock.setMinQuantity(newMinQuantity);
+        stock.setQuantity(newQuantity); // Đảm bảo ghi lại số lượng cũ, không phải 0
+
+        // 7. Lưu (Hibernate sẽ chỉ update những gì thay đổi)
         ingredientRepo.save(existing);
         stockRepo.save(stock);
 
-        // Lưu lịch sử
-        createHistoryRecord(existing.getIngredientId(), oldQty, newQuantity, oldMin, newMinQuantity, "Cập nhật thông tin admin");
+        // 8. Lưu lịch sử
+        createHistoryRecord(existing.getIngredientId(), oldQty, newQuantity, oldMin, newMinQuantity, "Cập nhật giá trị MIN");
     }
 
     // --- 3. NHẬP KHO (Import Stock) ---
+    // Trong IngredientServiceImpl.java
+
     @Override
+    @Transactional
     public void importStock(List<IngredientDTO> importList) {
         for (IngredientDTO dto : importList) {
             IngredientStock stock = stockRepo.findById(dto.getIngredientId())
-                    .orElseThrow(() -> new RuntimeException("Chưa có dữ liệu kho cho ID: " + dto.getIngredientId()));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy kho cho ID: " + dto.getIngredientId()));
 
             BigDecimal oldQty = stock.getQuantity();
-            BigDecimal importQty = dto.getQuantity();
+            BigDecimal rate = (dto.getConversionRate() != null) ? dto.getConversionRate() : BigDecimal.ONE;
+            BigDecimal inputQty = (dto.getQuantityInput() != null) ? dto.getQuantityInput() : dto.getQuantity();
+            BigDecimal addedQuantity = inputQty.multiply(rate);
+            BigDecimal newQty = oldQty.add(addedQuantity);
 
-            if (importQty == null || importQty.compareTo(BigDecimal.ZERO) <= 0) continue;
-
-            BigDecimal newQty = oldQty.add(importQty);
-
-            // Cập nhật kho
+            // 1. Cập nhật bảng tổng kho
             stock.setQuantity(newQty);
-            stock.setUpdatedAt(LocalDateTime.now());
             stockRepo.save(stock);
 
-            // Lưu lịch sử
-            String note = "Nhập kho: +" + importQty + " " + stock.getIngredient().getUnit();
-            createHistoryRecord(dto.getIngredientId(), oldQty, newQty, stock.getMinQuantity(), stock.getMinQuantity(), note);
+            // 2. LƯU CHI TIẾT PHIẾU NHẬP (Để nhấn nút icon tờ hóa đơn nó hiện ra)
+            StockIn stockIn = new StockIn();
+            stockIn.setIngredient(stock.getIngredient()); // Lấy object Ingredient từ stock
+            stockIn.setQuantityInput(inputQty);
+            stockIn.setUnitName(dto.getUnitName());
+            stockIn.setConversionRate(rate);
+            stockIn.setQuantityBase(addedQuantity);
+            stockIn.setNote(dto.getNote());
+            stockIn.setCreatedAt(LocalDateTime.now());
+            stockInRepo.save(stockIn); // LƯU XUỐNG DB TẠI ĐÂY
+
+            // 3. Lưu lịch sử tổng quát (Sửa lại để không mất Min)
+            createHistoryRecord(
+                    dto.getIngredientId(),
+                    oldQty,
+                    newQty,
+                    stock.getMinQuantity(), // Lấy Min hiện tại từ DB
+                    stock.getMinQuantity(), // Mới nhập hàng nên Min giữ nguyên
+                    "Nhập " + inputQty + " " + dto.getUnitName() + " (Quy đổi: " + rate + ")"
+            );
         }
     }
 

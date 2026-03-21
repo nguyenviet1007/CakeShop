@@ -35,7 +35,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 //    LEFT JOIN FETCH p.images
 //    WHERE p.category.id = :id
 //    """)
-
+@Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL")
+List<String> findAllDistinctCategories();
     // Lấy danh sách các tên Category không trùng lặp để làm Menu
     @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL")
     List<String> findDistinctCategories();
