@@ -9,11 +9,14 @@ import bakery.entity.OrderDetail;
 import bakery.repository.DailyStockRepository;
 import bakery.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +27,14 @@ public class AdOrderServiceImpl implements AdOrderService {
     @Autowired
     private DailyStockRepository dailyStockRepo;
     @Override
-    public List<Order> getAllOrders() { return orderRepo.findAll(); }
+    public List<Order> getAllOrders() {
+        return orderRepo.findAll();
+    }
+    @Override
+    public Page<Order> getAllOrders(Pageable pageable) {
+        // Spring Data JPA sẽ tự thêm "ORDER BY id DESC LIMIT 10" vào SQL
+        return orderRepo.findAll(pageable);
+    }
 
     @Override
     public Order getOrderById(Long id) {
@@ -78,6 +88,13 @@ public class AdOrderServiceImpl implements AdOrderService {
 
         // 7. QUAN TRỌNG: Lưu và trả về đối tượng Order (để lấy ID)
         return orderRepo.save(order);
+    }
+    @Override
+    public Page<Order> getOrdersByDateRange(LocalDate start, LocalDate end, Pageable pageable) {
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
+
+        return orderRepo.findByOrderDateBetween(startDateTime, endDateTime, pageable);
     }
 }
 

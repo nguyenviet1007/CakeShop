@@ -1,0 +1,56 @@
+<div th:fragment="reportContent">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-light border-0 shadow-sm text-center p-3">
+                <small class="text-muted fw-bold">TỔNG NHẬP (LÀM RA)</small>
+                <h3 class="mb-0 text-dark" th:text="${sumInitial}">0</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-light border-0 shadow-sm text-center p-3">
+                <small class="text-success fw-bold">TỔNG ĐÃ BÁN</small>
+                <h3 class="mb-0 text-success" th:text="${sumSold}">0</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-light border-0 shadow-sm text-center p-3">
+                <small class="text-danger fw-bold">TỔNG TỒN KHO</small>
+                <h3 class="mb-0 text-danger" th:text="${sumRemaining}">0</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle border">
+            <thead class="table-dark">
+            <tr>
+                <th>Sản phẩm</th>
+                <th class="text-center">Nhập</th>
+                <th class="text-center text-info">Bán</th>
+                <th class="text-center text-warning">Tồn</th>
+                <th class="text-end">Doanh thu</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${reportData}">
+                <td class="fw-bold" th:text="${item.productName}">Bánh</td>
+                <td class="text-center" th:text="${item.initial}">0</td>
+                <td class="text-center text-primary fw-bold" th:text="${item.sold}">0</td>
+                <td class="text-center text-danger" th:text="${item.remaining}">0</td>
+                <td class="text-end fw-bold text-success"
+                    th:text="${#numbers.formatDecimal(item.revenue, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</td>
+            </tr>
+            </tbody>
+            <tfoot class="table-light fw-bold">
+            <tr>
+                <td class="text-end">TỔNG CỘNG:</td>
+                <td class="text-center" th:text="${sumInitial}">0</td>
+                <td class="text-center text-primary" th:text="${sumSold}">0</td>
+                <td class="text-center text-danger" th:text="${sumRemaining}">0</td>
+                <td class="text-end text-success fs-5"
+                    th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>

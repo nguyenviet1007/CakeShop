@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<div th:fragment="adminSidebar(activePage)" class="sidebar">
+    <div class="sidebar-title">Bakery Admin</div>
+
+    <a th:href="@{/manager/products}"
+       th:classappend="${activePage == 'products'} ? 'active' : ''">
+        Sản phẩm
+    </a>
+
+    <a th:href="@{/manager/orders}"
+       th:classappend="${activePage == 'orders'} ? 'active' : ''">
+        Đơn hàng
+    </a>
+
+    <a th:href="@{/manager/ingredients}"
+       th:classappend="${activePage == 'ingredients'} ? 'active' : ''">
+        Kho nguyên liệu
+    </a>
+
+    <a th:href="@{/logout}" class="logout-btn mt-auto">
+        Đăng xuất
+    </a>
+</div>
+
+</body>
+</html>

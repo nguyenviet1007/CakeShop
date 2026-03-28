@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,20 +70,14 @@ public class OrderController {
         if (user == null) return ResponseEntity.status(401).build();
 
         String paymentMethod = data.get("paymentMethod");
+        String voucherCode = data.get("voucherCode"); // Lấy mã voucher từ request
 
         List<Cart> cartItems = cartService.findByUserId(user.getId());
-        if (cartItems.isEmpty()) return ResponseEntity.badRequest().body("Không có gì để xác nhận.");
+        if (cartItems.isEmpty()) return ResponseEntity.badRequest().body("Giỏ hàng trống.");
 
-        try {
-            // 1. Lưu đơn hàng vào Database
-            orderService.saveOrder(user, cartItems,paymentMethod);
+        orderService.saveOrder(user, cartItems, paymentMethod, voucherCode);
 
-            // 2. Xóa sạch giỏ hàng của người dùng
-            cartService.clearCart(user.getId());
-
-            return ResponseEntity.ok("Đơn hàng đã được ghi nhận thành công!");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Lỗi hệ thống: " + e.getMessage());
-        }
+        cartService.clearCart(user.getId());
+        return ResponseEntity.ok("Đơn hàng đã được ghi nhận thành công!");
     }
 }

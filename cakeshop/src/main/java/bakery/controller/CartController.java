@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,9 +32,12 @@ public class CartController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Vui lòng đăng nhập!");
         }
 
-        cartService.addToCart(user.getId(), productId, quantity);
-
-        return ResponseEntity.ok(cartService.findByUserId(user.getId()));
+        try {
+            cartService.addToCart(user.getId(), productId, quantity);
+            return ResponseEntity.ok(cartService.findByUserId(user.getId()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @GetMapping("/items")
@@ -47,8 +51,21 @@ public class CartController {
 
     @PutMapping("/update")
     public ResponseEntity<?> updateQuantity(@RequestParam Long cartId, @RequestParam Integer quantity) {
-        cartService.updateQuantity(cartId, quantity);
-        return ResponseEntity.ok("Success");
+        try {
+            cartService.updateQuantity(cartId, quantity);
+            return ResponseEntity.ok("Success");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PutMapping("/delete")
+    public ResponseEntity<?> delete(@RequestParam Long cartId) {
+        try {
+            cartService.removeFromCart(cartId);
+            return ResponseEntity.ok("Success");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/checkout")
@@ -88,6 +105,20 @@ public class CartController {
                 info
         );
         return ResponseEntity.ok(Map.of("qrUrl", qrUrl, "total", totalAmount));
+    }
+    @GetMapping("/api/vouchers/check")
+    public ResponseEntity<?> checkVoucher(@RequestParam String code) {
+        // Giả sử tìm trong database
+        if ("W2".equalsIgnoreCase(code)) {
+            Map<String, Object> voucher = new HashMap<>();
+            voucher.put("code", "W2");
+            voucher.put("discountRate", 50);          // 50%
+            voucher.put("maxDiscount", 20000);       // Tối đa 20k
+            voucher.put("minOrder", 100000);         // Đơn từ 100k
+            voucher.put("expiryDate", "2026-03-27T17:23:00"); // Hạn dùng
+            return ResponseEntity.ok(voucher);
+        }
+        return ResponseEntity.status(404).body("Mã giảm giá không tồn tại hoặc đã hết lượt!");
     }
 }
 

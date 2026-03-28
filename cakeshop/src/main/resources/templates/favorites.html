@@ -1,0 +1,49 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:replace="fragments/account-layout :: accountLayout(~{::content})">
+    <div th:fragment="content">
+        <h3 class="mb-4" style="color: #d81b60; font-weight: 600;">Sản Phẩm Yêu Thích</h3>
+
+        <div th:if="${#lists.isEmpty(favoriteProducts)}" class="text-center py-5 bg-white rounded-4 shadow-sm">
+            <i class="far fa-heart mb-3 opacity-20" style="font-size: 4rem; color: #ccc;"></i>
+            <p class="text-muted">Danh sách yêu thích của bạn đang trống.</p>
+            <a th:href="@{/}" class="btn btn-pink rounded-pill px-4 mt-2">Khám phá bánh ngay</a>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 g-3" th:if="${!#lists.isEmpty(favoriteProducts)}">
+            <div class="col" th:each="fav : ${favoriteProducts}">
+                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="d-flex align-items-center p-3">
+                        <div class="flex-shrink-0" style="width: 80px; height: 80px;">
+                            <img th:src="@{/img/{file}(file=${fav.product.images[0].imageUrl})}"
+                                 class="w-100 h-100 rounded-3"
+                                 style="object-fit: cover;"
+                                 th:alt="${fav.product.name}">
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="fw-bold mb-1" th:text="${fav.product.name}">Tên bánh</h6>
+                            <p class="text-pink fw-bold mb-0"
+                               th:text="${#numbers.formatDecimal(fav.product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'"></p>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light border-0 py-2 d-flex justify-content-between">
+                        <div>
+                            <button class="btn btn-sm btn-outline-pink rounded-pill px-3 me-1"
+                                    th:onclick="'addToCart(' + ${fav.product.productId} + ')'">
+                                Thêm vào giỏ
+                            </button>
+                            <button class="btn btn-sm btn-pink rounded-pill px-3"
+                                    th:onclick="'loadFavProductDetail(' + ${fav.product.productId} + ')'">
+                                Xem chi tiết
+                            </button>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                th:onclick="'confirmDeleteFavorite(' + ${fav.product.productId} + ')'">
+                            <i class="fas fa-trash-alt me-1"></i> Xóa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

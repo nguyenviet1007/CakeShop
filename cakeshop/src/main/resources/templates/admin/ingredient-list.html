@@ -9,10 +9,65 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        /* --- ÉP SIDEBAR PRODUCT GIỐNG HỆT DASHBOARD --- */
+.sidebar {
+    width: 220px !important; /* Về lại 220px chuẩn Dashboard của bạn */
+    background-color: #f8f9fa !important;
+    padding: 30px 20px !important;
+    border-right: 1px solid #e0e0e0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh !important;
+    z-index: 1000;
+}
+
+.sidebar-title {
+    font-weight: 800 !important;
+    font-size: 18px !important; /* Khớp Dashboard */
+    margin-bottom: 40px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    color: #333 !important;
+}
+
+.sidebar a {
+    text-decoration: none !important;
+    color: #555 !important; /* Màu xám chuẩn Dashboard */
+    padding: 10px 15px !important; /* Padding chuẩn 10-15 */
+    margin-bottom: 5px !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important; /* ÉP VỀ 14PX THEO DASHBOARD CỦA BẠN */
+    transition: all 0.3s !important;
+    display: block !important;
+}
+
+/* Hiệu ứng Active/Hover đồng điệu */
+.sidebar a:hover,
+.sidebar a.active {
+    background-color: #fce8f3 !important; /* --pink-light */
+    color: #d63384 !important; /* --pink-primary */
+    font-weight: 600 !important;
+}
+
+.sidebar .logout-btn {
+    margin-top: auto !important;
+    color: #dc3545 !important;
+    font-size: 14px !important;
+}
+
+/* Căn chỉnh lại main của trang Product để khớp với độ rộng 220px */
+main {
+    margin-left: 220px !important;
+    width: calc(100% - 220px) !important;
+}
+    </style>
+    <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .sidebar { min-height: 100vh; background: #343a40; color: white; }
-        .sidebar a { color: #adb5bd; text-decoration: none; padding: 12px 20px; display: block; border-left: 3px solid transparent; }
-        .sidebar a:hover, .sidebar a.active { background: #495057; color: #198754; border-left-color: #198754; }
+
         .action-area {
             background: white;
             padding: 20px;
@@ -50,14 +105,14 @@
 <div class="container-fluid">
     <div class="row">
 
-        <nav th:replace="~{fragments/sidebar :: sidebar(activePage='ingredients')}"></nav>
+        <div th:replace="~{admin/fragments/sidebar-manager :: adminSidebar('ingredients')}"></div>
 
         <main class="col-md-10 ms-sm-auto col-lg-10 px-md-4 py-4">
 
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="h3 mb-0 text-gray-800">Kho Nguyên Liệu</h2>
                 <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body p-2"> <form th:action="@{/admin/ingredients}" method="get" class="row g-2 align-items-center">
+                    <div class="card-body p-2"> <form th:action="@{/manager/ingredients}" method="get" class="row g-2 align-items-center">
 
                         <div class="col-12">
                             <div class="input-group">
@@ -81,7 +136,7 @@
                                 </button>
 
                                 <a th:if="${keyword != null or (status != null and status != 'all')}"
-                                   th:href="@{/admin/ingredients}"
+                                   th:href="@{/manager/ingredients}"
                                    class="btn btn-light border" title="Xóa lọc">
                                     <i class="fa-solid fa-rotate-left text-secondary"></i>
                                 </a>
@@ -116,7 +171,7 @@
                             <li><hr class="dropdown-divider"></li>
 
                             <li>
-                                <a class="dropdown-item py-2" th:href="@{/admin/ingredients/import}">
+                                <a class="dropdown-item py-2" th:href="@{/manager/ingredients/import}">
                                     <i class="fa-solid fa-boxes-packing text-success me-2" style="width: 20px"></i>
                                     Nhập hàng vào kho
                                 </a>
@@ -129,7 +184,7 @@
                         </button>
                         <ul class="dropdown-menu shadow">
                             <li>
-                                <a class="dropdown-item py-2 fw-bold text-primary" th:href="@{/admin/products/production-plan}">
+                                <a class="dropdown-item py-2 fw-bold text-primary" th:href="@{/manager/products/production-plan}">
                                     <i class="fa-solid fa-cake-candles me-2" style="width: 20px"></i>
                                     Xuất kho theo Mẻ bánh
                                 </a>
@@ -138,7 +193,7 @@
                             <li><hr class="dropdown-divider"></li>
 
                             <li>
-                                <a class="dropdown-item py-2" th:href="@{/admin/ingredients/export}">
+                                <a class="dropdown-item py-2" th:href="@{/manager/ingredients/export}">
                                     <i class="fa-solid fa-hand-holding-hand text-warning me-2" style="width: 20px"></i>
                                     Xuất kho thủ công
                                 </a>
@@ -195,7 +250,7 @@
                                         title="Chi tiết phiếu nhập">
                                     <i class="fa-solid fa-file-invoice"></i>
                                 </button>
-                                <a th:href="@{/admin/ingredients/delete/{id}(id=${ing.ingredientId})}" class="btn btn-sm btn-danger"
+                                <a th:href="@{/manager/ingredients/delete/{id}(id=${ing.ingredientId})}" class="btn btn-sm btn-danger"
                                    onclick="xoaNguyenLieu(event, this);">
                                     <i class="fa-solid fa-trash"></i> Xóa
                                 </a>
@@ -210,7 +265,7 @@
                         </tbody>
                     </table>
                     <div class="mt-4 d-flex justify-content-center">
-                        <nav th:replace="~{fragments/pagination :: pagination(pageData=${ingredientPage}, link='/admin/ingredients')}">
+                        <nav th:replace="~{fragments/pagination :: pagination(pageData=${ingredientPage}, link='/manager/ingredients')}">
                         </nav>
                     </div>
                 </div>
@@ -256,7 +311,7 @@
         `;
 
         // Gọi AJAX
-        fetch('/admin/ingredients/history/' + ingredientId)
+        fetch('/manager/ingredients/history/' + ingredientId)
             .then(response => {
                 if (!response.ok) throw new Error('Lỗi tải');
                 return response.text();
@@ -295,7 +350,7 @@
           myModal.show();
 
           // Gọi AJAX lấy HTML form
-          let url = (type === 'add') ? '/admin/ingredients/modal/add' : '/admin/ingredients/modal/edit/' + id;
+          let url = (type === 'add') ? '/manager/ingredients/modal/add' : '/manager/ingredients/modal/edit/' + id;
 
           fetch(url)
               .then(res => {
@@ -312,7 +367,7 @@
       }
   function openStockInModal(id) {
       // Gọi AJAX lấy fragment HTML từ Controller
-      fetch('/admin/ingredients/stock-in-details/' + id)
+      fetch('/manager/ingredients/stock-in-details/' + id)
           .then(response => {
               if (!response.ok) throw new Error('Không có dữ liệu nhập kho chi tiết');
               return response.text();

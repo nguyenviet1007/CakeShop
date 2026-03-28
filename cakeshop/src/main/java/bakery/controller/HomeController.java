@@ -6,8 +6,10 @@ import bakery.repository.*;
 import bakery.service.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -24,11 +27,7 @@ public class HomeController {
 
     @Autowired private ProductRepository productRepository;
 
-//    @Autowired private CategoryRepository categoryRepository;
-
-    @Autowired private UserRepository userRepository;
-
-    @Autowired private OrderRepository orderRepository;
+//    @Autowired private CategoryRepository categoryRepository;`
 
     @Autowired private OrderDetailRepository orderDetailRepository;
 
@@ -36,14 +35,54 @@ public class HomeController {
 
     @Autowired private FeedbackServiceImpl feedbackService;
 
+    @Autowired private BlogRepository blogRepository;
+
+    @Autowired private BlogServiceImpl blogService;
+
+    @Autowired private FavoriteRepository favoriteRepository;
+
+
     @GetMapping("/")
-    public String index(Model model) {
-//        model.addAttribute("categories", categoryRepository.findAll());
-//        model.addAttribute("products", productRepository.findAllWithImages());
-//        return "Home";
-        model.addAttribute("categories", productRepository.findDistinctCategories());
-        model.addAttribute("products", productRepository.findAllWithImages());
-        return "Home";
+    public String index(@RequestParam(defaultValue = "0") int page,
+                        HttpSession session,
+                        Model model) {
+        try {
+            int size = 8; // Lưới 8 sản phẩm 1 trang theo yêu cầu
+            Pageable pageable = PageRequest.of(page, size);
+
+            // 1. Lấy danh sách danh mục (giữ nguyên để hiện navbar)
+            List<String> categories = productRepository.findDistinctCategories();
+
+            // 2. Lấy sản phẩm có phân trang
+            Page<Product> productPage = productRepository.findAllByIsVisibleTrue(pageable);
+            List<Product> products = productPage.getContent();
+
+            // 3. Kiểm tra đăng nhập để xác định trạng thái "Yêu thích"
+            User user = (User) session.getAttribute("user");
+            if (user != null) {
+                for (Product product : products) {
+                    boolean isLiked = favoriteRepository.existsByUserAndProduct(user, product);
+                    product.setIsFavorited(isLiked);
+                }
+            }
+
+            // 4. Lấy sản phẩm giảm giá cho Banner (không phân trang)
+            List<Product> discountedProducts = productRepository.findByDiscountPercentGreaterThan(0);
+
+            // 5. Đưa dữ liệu ra view
+            model.addAttribute("categories", categories);
+            model.addAttribute("products", products); // Danh sách 8 sản phẩm
+            model.addAttribute("discountedProducts", discountedProducts);
+
+            // Dữ liệu phân trang
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", productPage.getTotalPages());
+
+            return "Home";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
     }
 //    @GetMapping("/category/{id}")
 //    public String getProductsByCategory(@PathVariable Long id, Model model) {
@@ -203,102 +242,20 @@ public class HomeController {
         }).collect(Collectors.toList());
         return ResponseEntity.ok(result);
     }
-    @GetMapping("/account/profile")
-    public String profile(HttpSession session, Model model){
-
-        User user = (User) session.getAttribute("user");
-
-        model.addAttribute("customer", user);
-
-        return "profile";
+    @GetMapping("/blogs")
+    public String listBlogs(Model model) {
+        List<Blog> blogs = blogRepository.findAll();
+        model.addAttribute("categories", productRepository.findDistinctCategories());
+        model.addAttribute("blogs", blogs);
+        return "Home"; // Trả về trang Home nhưng có thêm list blog
+    }
+    @GetMapping("/blogs/{id}")
+    public String getBlogDetail(@PathVariable Integer id, Model model) {
+        // Gọi hàm getBlogById từ BlogServiceImpl đã có của bạn
+        Blog blog = blogService.getBlogById(id);
+        model.addAttribute("blog", blog);
+        model.addAttribute("categories", productRepository.findDistinctCategories());
+        return "blog-detail";
     }
 
-    @GetMapping("/account/orders")
-    public String orders(@RequestParam(required = false) String status,
-                         HttpSession session,
-                         Model model) {
-
-        User user = (User) session.getAttribute("user");
-
-        if (user == null) {
-            return "redirect:/login";
-        }
-        List<Order> orders;
-
-        // nếu không chọn status -> lấy tất cả
-        if (status == null || status.isEmpty()) {
-            orders = orderRepository.findByUserId(user.getId());
-        }
-        // nếu có status -> lọc theo trạng thái
-        else {
-            orders = orderRepository.findByUserIdAndStatus(user.getId(), status);
-        }
-
-        model.addAttribute("orders", orders);
-        model.addAttribute("currentStatus", status);
-        return "orders";
-    }
-    @GetMapping("/account/orders/{id}")
-    public String orderDetail(
-            @PathVariable Long id,
-            Model model) {
-
-        Order order = orderRepository.findById(id).orElse(null);
-
-        List<OrderDetail> orderDetails = orderDetailRepository.findByOrderId(id);
-
-        model.addAttribute("order", order);
-        model.addAttribute("orderDetails", orderDetails);
-
-        return "order-detail";
-    }
-
-    @PostMapping("/account/orders/cancel/{id}")
-    public String changeOrderStatus(@PathVariable("id") Long orderId, RedirectAttributes redirectAttributes) {
-        try {
-            // 1. Tìm đơn hàng theo ID
-            Order order = orderRepository.findById(orderId).orElse(null);
-
-            // 2. Kiểm tra điều kiện: Đơn hàng phải tồn tại và có trạng thái là UNPAID
-            // (Lưu ý: Nếu status của bạn là Enum, hãy dùng .name() hoặc so sánh trực tiếp với Enum OrderStatus.UNPAID)
-            if (order != null && "UNPAID".equals(order.getStatus().toString())) {
-
-                // 3. Đổi trạng thái thành CANCELLED
-                order.setStatus("CANCELLED"); // Hoặc order.setStatus(OrderStatus.CANCELLED) nếu dùng Enum
-
-                // 4. Lưu lại vào database
-                orderRepository.save(order);
-
-                redirectAttributes.addFlashAttribute("successMessage", "Đã hủy đơn hàng thành công!");
-            } else {
-                redirectAttributes.addFlashAttribute("errorMessage", "Không thể hủy đơn hàng này do trạng thái không hợp lệ.");
-            }
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra khi hủy đơn hàng.");
-        }
-
-        // Redirect người dùng quay lại trang chi tiết của chính đơn hàng đó
-        return "redirect:/account/orders/" + orderId;
-    }
-    @PostMapping("/update")
-    public String updateProfile(@ModelAttribute("customer") User formUser,
-                                HttpSession session) {
-
-        User user = (User) session.getAttribute("user");
-
-        if(user == null){
-            return "redirect:/login";
-        }
-
-        user.setName(formUser.getName());
-        user.setEmail(formUser.getEmail());
-        user.setPhone(formUser.getPhone());
-        user.setAddress(formUser.getAddress());
-
-        userRepository.save(user);
-
-        session.setAttribute("user", user);
-
-        return "redirect:/account/profile?success";
-    }
 }

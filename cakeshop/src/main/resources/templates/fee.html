@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Shipping Fee Config</title>
+    <meta charset="UTF-8">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .card {
+            width: 420px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        h4 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        label {
+            margin-top: 10px;
+            display: block;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 10px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            box-shadow: 0 0 8px white;
+            transform: scale(1.02);
+        }
+
+        .input-error {
+            border: 2px solid #ff6b6b !important;
+        }
+
+        .error {
+            color: #ffb3b3;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-save {
+            background: white;
+            color: #764ba2;
+        }
+
+        .btn-save:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48%;
+        }
+
+        .btn-back:hover {
+            opacity: 0.85;
+        }
+
+        .alert {
+            background: rgba(0, 255, 120, 0.15);
+            border: 1px solid rgba(180, 255, 210, 0.4);
+            color: #d8ffe8;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h4>💰 Cấu hình tiền shipper</h4>
+
+    <!-- SUCCESS -->
+    <div th:if="${param.feeSaved}" class="alert">
+        ✅ Lưu thành công!
+    </div>
+
+    <form th:action="@{/admin/shippers/fee/save}"
+          method="post"
+          th:object="${fee}"
+          onsubmit="return validateForm()">
+
+        <!-- DELIVERED -->
+        <label>Tiền giao thành công</label>
+        <input type="number"
+               id="deliveredFee"
+               th:field="*{deliveredFee}"
+               placeholder="VD: 15000"
+               oninput="validateFee(this, 'deliveredError')"
+               required>
+        <div id="deliveredError" class="error"></div>
+
+        <!-- FAILED -->
+        <label>Tiền giao thất bại</label>
+        <input type="number"
+               id="failedFee"
+               th:field="*{failedFee}"
+               placeholder="VD: 5000"
+               oninput="validateFee(this, 'failedError')"
+               required>
+        <div id="failedError" class="error"></div>
+
+        <!-- BUTTON -->
+        <div class="btn-group">
+            <a href="/admin/shippers" class="btn btn-back">⬅ Back</a>
+            <button class="btn btn-save">💾 Lưu</button>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+
+    function validateFee(input, errorId) {
+
+        let value = input.value.trim();
+        let error = document.getElementById(errorId);
+
+        error.innerText = "";
+        input.classList.remove("input-error");
+
+        // ❌ nhập chữ
+        if (value !== "" && isNaN(value)) {
+            error.innerText = "❌ Phải nhập số!";
+            input.classList.add("input-error");
+            return;
+        }
+
+        let num = Number(value);
+
+        // ❌ số âm
+        if (num < 0) {
+            error.innerText = "❌ Không được nhập số âm!";
+            input.classList.add("input-error");
+            return;
+        }
+
+        // ❌ quá lớn
+        if (num > 1000000) {
+            error.innerText = "❌ Giá trị quá lớn!";
+            input.classList.add("input-error");
+            return;
+        }
+    }
+
+    function validateForm() {
+
+        let delivered = document.getElementById("deliveredFee");
+        let failed = document.getElementById("failedFee");
+
+        let valid = true;
+
+        if (delivered.value === "" || delivered.value < 0) {
+            delivered.classList.add("input-error");
+            valid = false;
+        }
+
+        if (failed.value === "" || failed.value < 0) {
+            failed.classList.add("input-error");
+            valid = false;
+        }
+
+        if (!valid) {
+            alert("❌ Vui lòng nhập đúng dữ liệu!");
+        }
+
+        return valid;
+    }
+
+</script>
+
+</body>
+</html>

@@ -10,4 +10,5 @@ public interface DailyStockService {
     void saveDailyStock(DailyStockUpdateDTO dto);
     List<DailyStock> findAll();
     List<DailyStock> findByDate(LocalDate date);
+    void adjustAvailableQuantity(Long stockId, int amount, String reason);
 }

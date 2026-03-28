@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+
+<div th:fragment="adminSidebar(activePage)" class="sidebar">
+  <div class="sidebar-title">Bakery Admin</div>
+
+  <a th:href="@{/admin/dashboard}"
+     th:classappend="${activePage == 'dashboard'} ? 'active' : ''">
+     Dashboard
+  </a>
+
+  <a th:href="@{/admin/users}"
+     th:classappend="${activePage == 'users'} ? 'active' : ''">
+     Quản lý người dùng
+  </a>
+
+  <a th:href="@{/admin/blogs}"
+     th:classappend="${activePage == 'blogs'} ? 'active' : ''">
+     Quản lý Blog
+  </a>
+
+    <a th:href="@{/admin/vouchers}"
+       th:classappend="${activePage == 'vouchers'} ? 'active' : ''">
+        Quản lý Voucher
+    </a>
+
+
+  <a th:href="@{/logout}" class="logout-btn mt-auto">
+     Đăng xuất
+  </a>
+</div>
+
+</body>
+</html>

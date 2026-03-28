@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Shipper Profile</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+        body{background:linear-gradient(135deg,#eef2ff,#f8fafc);}
+
+        .container{width:420px;margin:60px auto;}
+
+        .profile-card{
+            background:white;
+            border-radius:20px;
+            padding:35px 25px;
+            box-shadow:0 15px 35px rgba(0,0,0,0.08);
+            text-align:center;
+            transition:0.3s;
+        }
+        .profile-card:hover{transform:translateY(-5px);}
+
+        /* HEADER */
+        .avatar{
+            width:100px;height:100px;border-radius:50%;
+            background:linear-gradient(135deg,#4f46e5,#6366f1);
+            color:white;font-size:42px;
+            display:flex;align-items:center;justify-content:center;
+            margin:auto;
+            box-shadow:0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        h2{margin-top:15px;color:#111827;}
+
+        .sub{color:#6b7280;font-size:14px;margin-bottom:20px;}
+
+        /* INFO */
+        .info{margin-top:20px;text-align:left;}
+
+        .row{
+            display:flex;
+            justify-content:space-between;
+            padding:12px 0;
+            border-bottom:1px solid #f1f5f9;
+        }
+
+        .label{font-weight:500;color:#6b7280;}
+        .value{color:#111827;font-weight:500;}
+
+        /* BUTTON */
+        .actions{margin-top:25px;display:flex;flex-direction:column;gap:10px;}
+
+        .btn{
+            padding:12px;
+            border-radius:10px;
+            border:none;
+            cursor:pointer;
+            text-decoration:none;
+            font-weight:500;
+            color:white;
+            transition:0.3s;
+        }
+
+        .btn:hover{opacity:0.9;}
+
+        .dashboard{background:linear-gradient(135deg,#3b82f6,#2563eb);}
+        .edit{background:linear-gradient(135deg,#f59e0b,#d97706);}
+        .password{background:linear-gradient(135deg,#8b5cf6,#7c3aed);}
+        .logout{background:linear-gradient(135deg,#ef4444,#dc2626);}
+
+        /* SUCCESS ALERT */
+        .alert{
+            width:420px;
+            margin:20px auto;
+            background:#dcfce7;
+            color:#166534;
+            padding:12px;
+            border-radius:10px;
+            font-weight:500;
+            text-align:center;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div th:if="${success}" class="alert">
+    <span th:text="${success}"></span>
+</div>
+
+<div class="container">
+
+    <div class="profile-card">
+
+        <div class="avatar">🚚</div>
+
+        <h2 th:text="${shipper.name}"></h2>
+        <div class="sub">Shipper Account</div>
+
+        <div class="info">
+
+            <div class="row">
+                <span class="label">ID</span>
+                <span class="value" th:text="${shipper.id}"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Email</span>
+                <span class="value" th:text="${shipper.email}"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Phone</span>
+                <span class="value" th:text="${shipper.phone}"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Address</span>
+                <span class="value" th:text="${shipper.address}"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Username</span>
+                <span class="value" th:text="${shipper.username}"></span>
+            </div>
+
+        </div>
+
+        <div class="actions">
+
+            <a th:href="@{/shipper}" class="btn dashboard">⬅ Dashboard</a>
+
+            <a th:href="@{/shipper/edit}" class="btn edit">✏️ Cập nhật</a>
+
+            <a th:href="@{/shipper/change-password}" class="btn password">🔑 Đổi mật khẩu</a>
+
+            <form th:action="@{/logout}" method="post">
+                <button class="btn logout">Logout</button>
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

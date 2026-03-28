@@ -193,7 +193,7 @@
 
 <div class="glass-toolbar d-flex justify-content-between align-items-center shadow-sm">
     <div class="d-flex align-items-center gap-2">
-        <a href="/admin/products" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/manager/products" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
         <h4 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-store text-info me-2"></i>Tủ Bánh</h4>
         <div class="vr mx-2"></div>
         <input type="date" class="form-control fw-bold text-primary border-primary bg-light" id="saleDate" style="max-width: 180px;">
@@ -203,8 +203,14 @@
         <button class="btn btn-info fw-bold text-white px-4" onclick="saveAllStock()">
             <i class="fa-solid fa-cloud-arrow-up me-2"></i>Lưu Đồng Bộ
         </button>
-        <a th:href="@{/admin/pos}" class="btn btn-primary shadow-sm fw-bold">
+        <a th:href="@{/manager/pos}" class="btn btn-primary shadow-sm fw-bold">
             <i class="fa-solid fa-cash-register me-1"></i> Bán Hàng Tại Quầy
+        </a>
+        <button class="btn btn-primary shadow-sm" onclick="openReport()">
+            <i class="fa-solid fa-chart-column me-2"></i>Báo cáo cuối ngày
+        </button>
+        <a href="/manager/daily-stock/adjustment-logs" class="btn btn-outline-primary shadow-sm">
+            <i class="fa-solid fa-list-check me-2"></i>Lịch sử điều chỉnh
         </a>
     </div>
 </div>
@@ -235,6 +241,15 @@
             <div class="product-card shadow-sm border position-relative" th:classappend="${!p.isVisible ? 'card-dimmed' : ''}">
 
                 <div class="card-actions">
+                    <button type="button" class="btn-action-icon btn-warning text-dark"
+                            th:if="${stock != null}"
+                            th:data-id="${stock.id}"
+                            th:data-name="${p.name}"
+                            th:data-qty="${availQty}"
+                            onclick="prepareAdjustModal(this)"
+                            title="Điều chỉnh hàng trên kệ">
+                        <i class="fa-solid fa-sliders"></i>
+                    </button>
                     <button type="button" class="btn-action-icon btn-eye" th:classappend="${!p.isVisible ? 'is-hidden' : ''}"
                             th:attr="data-id=${p.productId}, data-visible=${p.isVisible}"
                             onclick="toggleProductVisibility(this)"
@@ -253,7 +268,7 @@
 
                 <div class="card-img-wrapper">
                     <span class="status-badge bg-success">Đang bán</span>
-                    <img th:if="${p.mainImage != null}" th:src="${p.mainImage.imageUrl}" class="card-img-top" alt="img">
+                    <img th:if="${p.mainImage != null}" th:src="@{/uploads/{file}(file=${p.mainImage.imageUrl})}" class="card-img-top" alt="img">
                     <img th:unless="${p.mainImage != null}" src="https://via.placeholder.com/500?text=No+Image" class="card-img-top" alt="img">
                 </div>
 
@@ -283,12 +298,68 @@
         <div th:if="${#lists.isEmpty(products)}" class="col-12 text-center py-5">
             <i class="fa-solid fa-box-open fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">Chưa có sản phẩm nào trong hệ thống!</h5>
-            <a href="/admin/products" class="btn btn-primary mt-2">Quản lý Sản Phẩm</a>
+            <a href="/manager/products" class="btn btn-primary mt-2">Quản lý Sản Phẩm</a>
         </div>
 
     </div>
-</div>
 
+</div>
+<div class="modal fade" id="dailyReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-chart-pie me-2"></i>Báo Cáo Bán Hàng & Tồn Kho</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label small fw-bold">Chọn ngày báo cáo:</label>
+                        <input type="date" id="reportDate" class="form-control"
+                               th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" onclick="loadDailyReport()">Xem báo cáo</button>
+                    </div>
+                </div>
+                <div id="reportContentContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="adjustStockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold">Điều Chỉnh Hàng Trên Kệ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="adjustProductName" class="fw-bold text-primary"></p>
+                <div class="mb-3">
+                    <label class="form-label">Loại điều chỉnh:</label>
+                    <select id="adjustType" class="form-select">
+                        <option value="plus">Cộng vào (Hàng hoàn/Giao thất bại)</option>
+                        <option value="minus">Trừ ra (Hàng hỏng/Bồi thường khách)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Số lượng:</label>
+                    <input type="number" id="adjustAmount" class="form-control" value="1" min="1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Lý do cụ thể:</label>
+                    <textarea id="adjustReason" class="form-control" rows="2" placeholder="Ví dụ: Đơn #102 giao thất bại, bánh còn tốt..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="submitAdjustment()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     document.addEventListener("DOMContentLoaded", function() {
         const serverDate = /*[[${selectedDate != null ? selectedDate.toString() : null}]]*/ null;
@@ -308,7 +379,7 @@
         }
 
         dateInput.addEventListener('change', function() {
-            window.location.href = '/admin/daily-stock?date=' + this.value;
+            window.location.href = '/manager/daily-stock?date=' + this.value;
         });
 
         // Khởi tạo trạng thái màu sắc
@@ -431,7 +502,7 @@
             didOpen: () => { Swal.showLoading(); }
         });
 
-        fetch('/admin/daily-stock/save', {
+        fetch('/manager/daily-stock/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -472,7 +543,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 // Gọi API
-                fetch(`/admin/products/toggle-visibility/${productId}`, { method: 'POST' })
+                fetch(`/manager/products/toggle-visibility/${productId}`, { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
                     if(data.status === 'success') {
@@ -510,7 +581,7 @@
             if (result.isConfirmed) {
                 let percent = result.value;
                 // Gọi API truyền percent
-                fetch(`/admin/products/update-discount/${productId}?percent=${percent}`, { method: 'POST' })
+                fetch(`/manager/products/update-discount/${productId}?percent=${percent}`, { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
                     if(data.status === 'success') {
@@ -541,6 +612,96 @@ function filterDaily(element) {
             item.style.display = ""; // Hiện thẻ bánh phù hợp
         } else {
             item.style.display = "none"; // Ẩn thẻ bánh không phù hợp
+        }
+    });
+}
+// Khai báo biến để kiểm tra modal đã mở chưa
+let reportModalInstance = null;
+
+function openReport() {
+    const modalElem = document.getElementById('dailyReportModal');
+
+    // Kiểm tra xem thư viện bootstrap đã sẵn sàng chưa
+    if (typeof bootstrap === 'undefined') {
+        alert("Lỗi: Thư viện Bootstrap chưa được tải! Vui lòng kiểm tra kết nối mạng.");
+        return;
+    }
+
+    if (!reportModalInstance) {
+        reportModalInstance = new bootstrap.Modal(modalElem);
+    }
+
+    reportModalInstance.show();
+    loadDailyReport(); // Tự động lấy dữ liệu ngay khi mở
+}
+
+function loadDailyReport() {
+    const dateInput = document.getElementById('reportDate');
+    const container = document.getElementById('reportContentContainer');
+
+    if (!dateInput || !container) return;
+
+    const date = dateInput.value;
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Đang tải báo cáo ngày ${date}...</p>
+        </div>`;
+
+    // Gọi API lấy Fragment
+    fetch(`/manager/daily-stock/daily-report-view?date=${date}`)
+        .then(res => {
+            if (!res.ok) throw new Error("Lỗi Server");
+            return res.text();
+        })
+        .then(html => {
+            container.innerHTML = html;
+        })
+        .catch(err => {
+            container.innerHTML = `
+                <div class="alert alert-warning text-center">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+                    Chưa có dữ liệu chốt kho cho ngày <b>${date}</b>.
+                </div>`;
+        });
+}
+    let currentAdjustStockId = null;
+let adjustModalInstance = null;
+function prepareAdjustModal(btn) {
+    // Lấy dữ liệu từ thuộc tính data của nút bấm
+    const id = btn.getAttribute('data-id');
+    const name = btn.getAttribute('data-name');
+    const qty = btn.getAttribute('data-qty');
+
+    // Gọi lại hàm openAdjustModal cũ của bạn
+    openAdjustModal(id, name, qty);
+}
+function openAdjustModal(id, name, currentQty) {
+    currentAdjustStockId = id;
+    document.getElementById('adjustProductName').innerText = "Sản phẩm: " + name + " (Hiện có: " + currentQty + ")";
+    if (!adjustModalInstance) {
+        adjustModalInstance = new bootstrap.Modal(document.getElementById('adjustStockModal'));
+    }
+    adjustModalInstance.show();
+}
+
+function submitAdjustment() {
+    const type = document.getElementById('adjustType').value;
+    const amountVal = document.getElementById('adjustAmount').value;
+    const reason = document.getElementById('adjustReason').value;
+
+    // Nếu là 'minus' thì đổi dấu thành âm
+    const finalAmount = (type === 'plus') ? parseInt(amountVal) : -parseInt(amountVal);
+
+    fetch(`/manager/daily-stock/adjust-stock?stockId=${currentAdjustStockId}&amount=${finalAmount}&reason=${reason}`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            Swal.fire('Thành công', data.message, 'success').then(() => location.reload());
+        } else {
+            Swal.fire('Lỗi', data.message, 'error');
         }
     });
 }

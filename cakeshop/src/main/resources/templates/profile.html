@@ -1,35 +1,74 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <div th:replace="~{fragments/account-layout :: accountLayout(~{::content})}">
     <div th:fragment="content">
-        <h2>Hồ Sơ Của Tôi</h2>
-        <form class="profile-form"
-              th:action="@{/update}"
-              th:object="${customer}"
-              method="post">
-            <input type="hidden" th:field="*{id}">
-            <div class="form-group">
-                <label>Tên đăng nhập</label>
-                <input type="text" th:field="*{username}" readonly>
+        <div class="card border-0 shadow-sm p-4 rounded-4">
+            <h3 class="mb-4" style="color: #d81b60; font-weight: 600;">Hồ Sơ Của Tôi</h3>
+            <div th:if="${message}" th:class="${'alert alert-' + messageType + ' alert-dismissible fade show'}" role="alert">
+                <span th:text="${message}">Nội dung thông báo</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <div class="form-group">
-                <label>Tên</label>
-                <input type="text" th:field="*{name}">
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="text" th:field="*{email}">
-            </div>
-            <div class="form-group">
-                <label>Số điện thoại</label>
-                <input type="text" th:field="*{phone}">
-            </div>
-            <div class="form-group">
-                <label>Địa chỉ</label>
-                <input type="text" th:field="*{address}">
-            </div>
-            <button class="save-btn" type="submit">Lưu</button>
-        </form>
+            <form class="profile-form"
+                  th:action="@{/profile/update}"
+                  th:object="${customer}"
+                  method="post">
+                <input type="hidden" th:field="*{id}">
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted">Tên đăng nhập</label>
+                        <input type="text" class="form-control" th:field="*{username}" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="col-md-6 mt-3 mt-md-0">
+                        <label class="form-label fw-bold text-muted">Tên hiển thị</label>
+                        <input type="text" id="name" class="form-control"
+                               th:field="*{name}"
+                               th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+
+                        <div id="nameError" class="text-danger small mt-1"
+                             th:if="${#fields.hasErrors('name')}"
+                             th:errors="*{name}">
+                            Lỗi Tên hiểu thị
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted">Email</label>
+                        <input type="email" class="form-control" th:field="*{email}" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="col-md-6 mt-3 mt-md-0">
+                        <label class="form-label fw-bold text-muted">Số điện thoại</label>
+                        <input type="text" class="form-control" th:field="*{phone}"
+                               th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid'">
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">
+                            Lỗi số điện thoại
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-muted">Địa chỉ giao hàng</label>
+                    <input type="text" id="address" class="form-control"
+                           th:field="*{address}"
+                           th:classappend="${#fields.hasErrors('address')} ? 'is-invalid'">
+
+                    <div id="addressError"
+                         class="text-danger small mt-1"
+                         th:if="${#fields.hasErrors('address')}"
+                         th:errors="*{address}">
+                        Lỗi địa chỉ
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button class="btn px-5 py-2 fw-bold text-white rounded-pill shadow-sm"
+                                style="background-color: #d81b60;"
+                                type="submit">
+                            <i class="fas fa-save me-1"></i> Lưu Thay Đổi
+                        </button>
+                    </div>
+            </form>
+        </div>
     </div>
 </div>
-
 </html>

@@ -120,3 +120,25 @@ body {
 .input-group {
     overflow: hidden;
 }
+
+.nav-height-custom {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.rounded-pill-custom {
+    border-radius: 50rem !important;
+}
+
+.search-box .input-group-text,
+.search-box .form-control {
+    height: 42px;
+    border-color: #ff69b4;
+}
+
+.btn-outline-pink:hover {
+    background-color: #ff69b4;
+    color: white;
+}

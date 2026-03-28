@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Blog - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+    <style>
+        /* CSS giúp nội dung tóm tắt không quá dài */
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            max-width: 300px;
+            font-size: 0.9rem;
+        }
+
+        /* Định dạng đặc biệt cho nội dung bài viết */
+        .form-control-blog-content {
+            height: 350px;
+            font-family: 'Playfair Display', serif;
+            line-height: 1.6;
+            font-size: 1.1rem;
+            padding: 20px;
+            border-radius: 8px;
+            background: #fdfdfd;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .border-dashed {
+            border-style: dashed !important;
+            border-width: 2px !important;
+        }
+
+        /* Đảm bảo ảnh preview luôn đẹp và có thể bấm */
+        .preview-img-container img {
+            width: 100%;
+            height: 300px;
+            object-fit: contain;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .preview-img-container img:hover {
+            opacity: 0.8;
+            filter: brightness(0.9);
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar('blogs')}"></div>
+
+    <div class="main-content">
+        <div class="page-title">Quản lý Nội dung Blog</div>
+
+        <div th:if="${successMsg}" class="alert alert-success alert-dismissible fade show shadow-sm">
+            <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${successMsg}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <form th:action="@{/admin/blogs}" method="GET" class="mb-4 bg-light p-3 rounded shadow-sm border">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-9">
+                    <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm tiêu đề bài viết..." th:value="${keyword}">
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-pink flex-grow-1"><i class="bi bi-search"></i> Tìm</button>
+                    <button type="button" class="btn btn-pink text-nowrap" data-bs-toggle="modal" data-bs-target="#addBlogModal">+ Viết bài mới</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-container">
+            <table class="table-custom">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ảnh bìa</th>
+                    <th>Tiêu đề</th>
+                    <th>Tóm tắt nội dung</th>
+                    <th class="text-center">Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${blogPage.content}">
+                    <td th:text="${b.id}"></td>
+                    <td>
+                        <img th:if="${b.image != null}" th:src="@{'/uploads/' + ${b.image}}" alt="Blog"
+                             onclick="zoomImage(this.src)"
+                             style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer;">
+                        <span th:if="${b.image == null}" class="text-muted small">Trống</span>
+                    </td>
+                    <td><b th:text="${b.title}"></b></td>
+                    <td><div class="text-truncate-2 text-muted" th:text="${b.summary}"></div></td>
+                    <td class="text-center">
+                        <div class="action-group">
+                            <button class="text-primary border-0 bg-transparent"
+                                    data-bs-toggle="modal" data-bs-target="#editBlogModal"
+                                    th:data-id="${b.id}"
+                                    th:data-title="${b.title}"
+                                    th:data-summary="${b.summary}"
+                                    th:data-content="${b.content}"
+                                    th:data-image="${b.image}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <form th:action="@{'/admin/blogs/delete/' + ${b.id}}" method="POST" onsubmit="return confirm('Xóa bài viết này?');" style="display:inline;">
+                                <button type="submit" class="text-danger border-0 bg-transparent"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${blogPage.isEmpty()}">
+                    <td colspan="5" class="text-center text-muted py-4">Chưa có bài viết nào</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <nav th:if="${blogPage.totalPages > 1}" class="mt-4 d-flex justify-content-between align-items-center">
+                <div class="text-muted" style="font-size: 14px;">
+                    Hiển thị trang <b th:text="${currentPage}">1</b> / <b th:text="${blogPage.totalPages}">10</b>
+                </div>
+                <ul class="pagination pagination-sm mb-0 shadow-sm">
+                    <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/blogs(page=1, keyword=${keyword})}"><i class="bi bi-chevron-double-left"></i></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/blogs(page=${currentPage - 1}, keyword=${keyword})}">Trước</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(1, blogPage.totalPages)}"
+                        th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
+                        th:classappend="${currentPage == i} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/blogs(page=${i}, keyword=${keyword})}" th:text="${i}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == blogPage.totalPages} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/blogs(page=${currentPage + 1}, keyword=${keyword})}">Sau</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == blogPage.totalPages} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/blogs(page=${blogPage.totalPages}, keyword=${keyword})}"><i class="bi bi-chevron-double-right"></i></a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addBlogModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <form th:action="@{/admin/blogs/add}" method="POST" enctype="multipart/form-data">
+                <div class="row g-0">
+                    <div class="col-md-5 bg-light border-end d-flex flex-column align-items-center justify-content-center p-4">
+                        <label class="form-label fw-bold text-muted small mb-3">ẢNH BÌA BÀI VIẾT</label>
+                        <div class="preview-img-container w-100">
+                            <img id="addBlogImgPreview" src="" alt="Preview"
+                                 onclick="zoomImage(this.src)"
+                                 title="Bấm để xem ảnh rõ hơn"
+                                 style="display: none;">
+                            <div id="noAddBlogImg" class="text-center p-5 bg-white rounded border border-dashed d-flex flex-column align-items-center justify-content-center" style="height: 300px; color: #a0a0a0;">
+                                <i class="bi bi-image" style="font-size: 3rem;"></i>
+                                <span class="mt-2 small">Chọn một ảnh bìa mới</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 w-100">
+                            <input type="file" class="form-control form-control-sm" id="addBlogImgInput" name="imageFile" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="col-md-7 p-4">
+                        <div class="modal-header p-0 mb-3 border-0">
+                            <h5 class="modal-title fw-bold">Viết bài Blog mới</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-0">
+                            <div class="mb-3">
+                                <label class="form-label">Tiêu đề bài viết <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="title" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Tóm tắt ngắn</label>
+                                <textarea class="form-control" name="summary" rows="3" placeholder="Viết mô tả ngắn..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nội dung chi tiết <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-blog-content" name="content" required placeholder="Viết nội dung bài viết..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer p-0 mt-4 border-0">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-pink btn-sm px-4">Đăng bài</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editBlogModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <form id="editBlogForm" method="POST" enctype="multipart/form-data">
+                <div class="row g-0">
+                    <div class="col-md-5 bg-light border-end d-flex flex-column align-items-center justify-content-center p-4">
+                        <label class="form-label fw-bold text-muted small mb-3">ẢNH BÌA BÀI VIẾT</label>
+                        <div class="preview-img-container w-100">
+                            <img id="editBlogImgPreview" src="" alt="Preview"
+                                 onclick="zoomImage(this.src)"
+                                 title="Bấm để xem ảnh rõ hơn"
+                                 style="display: none;">
+                            <div id="noBlogImg" class="text-center p-5 bg-white rounded border border-dashed d-flex flex-column align-items-center justify-content-center" style="height: 300px; color: #a0a0a0;">
+                                <i class="bi bi-image" style="font-size: 3rem;"></i>
+                                <span class="mt-2 small">Chưa có ảnh banner</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 w-100">
+                            <input type="file" class="form-control form-control-sm" id="editBlogImgInput" name="imageFile" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="col-md-7 p-4">
+                        <div class="modal-header p-0 mb-3 border-0">
+                            <h5 class="modal-title fw-bold">Chỉnh sửa bài viết</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-0">
+                            <div class="mb-3">
+                                <label class="form-label">Tiêu đề</label>
+                                <input type="text" class="form-control" name="title" id="editBlogTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Tóm tắt bài viết</label>
+                                <textarea class="form-control" name="summary" id="editBlogSummary" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nội dung chi tiết</label>
+                                <textarea class="form-control form-control-blog-content" name="content" id="editBlogContent" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer p-0 mt-4 border-0">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-pink btn-sm px-4">Lưu thay đổi</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="imageZoomModal" tabindex="-1" style="background: rgba(0,0,0,0.8);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="background: transparent; border: none;">
+            <div class="modal-body text-center p-0">
+                <img id="zoomedImage" src="" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /* --- 1. LOGIC MODAL EDIT --- */
+    const editBlogModal = document.getElementById('editBlogModal');
+    if (editBlogModal) {
+        editBlogModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+
+            // Cập nhật action tuyệt đối cho form
+            document.getElementById('editBlogForm').action = 'blogs/edit/' + id;
+
+            // Đổ dữ liệu text
+            document.getElementById('editBlogTitle').value = button.getAttribute('data-title') || '';
+            document.getElementById('editBlogSummary').value = button.getAttribute('data-summary') || '';
+            document.getElementById('editBlogContent').value = button.getAttribute('data-content') || '';
+
+            // Xử lý ảnh cũ (Dùng context path từ Thymeleaf)
+            const imageName = button.getAttribute('data-image');
+            const preview = document.getElementById('editBlogImgPreview');
+            const noImgText = document.getElementById('noBlogImg');
+
+            if (imageName && imageName !== 'null' && imageName !== '') {
+                const uploadUrl = /*[[@{/uploads/}]]*/ '/uploads/';
+                preview.src = uploadUrl + imageName;
+                preview.style.display = 'block';
+                noImgText.classList.remove('d-flex');
+                noImgText.classList.add('d-none');
+            } else {
+                preview.src = '';
+                preview.style.display = 'none';
+                noImgText.classList.remove('d-none');
+                noImgText.classList.add('d-flex');
+            }
+        });
+    }
+
+    /* --- 2. HÀM PREVIEW ẢNH KHI CHỌN FILE (DÙNG CHO CẢ ADD & EDIT) --- */
+    function setupImagePreview(inputId, previewId, placeholderId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        const placeholder = document.getElementById(placeholderId);
+
+        if (input) {
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        preview.src = event.target.result;
+                        preview.style.display = 'block';
+                        // Ẩn placeholder bằng class để thắng !important của d-flex
+                        placeholder.classList.remove('d-flex');
+                        placeholder.classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    }
+
+    setupImagePreview('addBlogImgInput', 'addBlogImgPreview', 'noAddBlogImg');
+    setupImagePreview('editBlogImgInput', 'editBlogImgPreview', 'noBlogImg');
+
+    /* --- 3. LOGIC ZOOM PHÓNG TO ẢNH --- */
+    const zoomModal = new bootstrap.Modal(document.getElementById('imageZoomModal'));
+    function zoomImage(src) {
+        if (src && src !== window.location.href) {
+            document.getElementById('zoomedImage').src = src;
+            zoomModal.show();
+        }
+    }
+</script>
+</body>
+</html>

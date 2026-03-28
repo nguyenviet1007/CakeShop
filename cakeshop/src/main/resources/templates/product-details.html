@@ -11,11 +11,11 @@
         <!-- LEFT: IMAGE -->
         <div class="gallery">
             <img id="main-image"
-                 th:src="@{/img/{img}(img=${product.images[0].imageUrl})}"
+                 th:src="@{/uploads/{img}(img=${product.images[0].imageUrl})}"
                  class="main-image"/>
             <div class="thumbnail-list">
                 <img th:each="img : ${product.images}"
-                     th:src="@{/img/{img}(img=${img.imageUrl})}"
+                     th:src="@{/uploads/{img}(img=${img.imageUrl})}"
                      class="thumbnail"
                      onclick="changeImage(this)">
             </div>

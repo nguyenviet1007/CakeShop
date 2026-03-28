@@ -6,6 +6,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -40,4 +41,7 @@ public class DailyStock {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    // Thêm vào trong class DailyStock
+    @OneToMany(mappedBy = "dailyStock", cascade = CascadeType.ALL)
+    private List<StockAdjustmentLog> adjustmentLogs;
 }

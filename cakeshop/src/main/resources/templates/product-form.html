@@ -125,7 +125,7 @@
             </span>
         </div>
 
-        <form th:action="@{/admin/products/save}"
+        <form th:action="@{/manager/products/save}"
               th:object="${product}"
               method="post"
               enctype="multipart/form-data"
@@ -244,7 +244,7 @@
             <hr class="my-4 text-muted" style="opacity: 0.1">
 
             <div class="d-flex justify-content-end gap-2">
-                <a th:href="@{/admin/products}" class="btn btn-back">
+                <a th:href="@{/manager/products}" class="btn btn-back">
                     <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
                 </a>
                 <button type="submit" class="btn btn-save">

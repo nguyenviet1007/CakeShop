@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/admin/ingredients")
+@RequestMapping("/manager/ingredients")
 
 public class IngredientController {
 

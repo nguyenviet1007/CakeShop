@@ -15,35 +15,24 @@ import java.util.Optional;
 @Controller
 public class AuthController {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    // Hiển thị trang Login/Register
     @GetMapping("/login")
-    public String showLoginPage() {
+    public String login(){
         return "login";
     }
 
-    // Xử lý Đăng nhập
     @PostMapping("/login")
-    public String login(@RequestParam String phoneNumber,
-                        @RequestParam String password,
-                        HttpSession session, Model model) {
+    public String doLogin(String username, String password){
 
-        Optional<User> user = userRepository.findByPhone(phoneNumber);
-
-        if (user.isPresent() && user.get().getPassword().equals(password)) {
-            session.setAttribute("user", user);
-            return "redirect:/";
+        if(username == null || password == null){
+            return "login";
         }
 
-        model.addAttribute("error", "Số điện thoại hoặc mật khẩu không đúng!");
+        if(username.equals("shipper")
+                && password.equals("123")){
+            return "home";
+        }
+
         return "login";
-    }
-    @GetMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate(); // Xóa session khi đăng xuất
-        return "redirect:/login";
     }
 
 }

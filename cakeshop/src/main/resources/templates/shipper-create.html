@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Create Shipper</title>
+    <meta charset="UTF-8">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body{
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .card{
+            border-radius: 20px;
+        }
+
+        .input-error {
+            border: 1px solid #dc3545 !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4>➕ Create Shipper</h4>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <form th:action="@{/admin/shippers/save}"
+                          method="post"
+                          th:object="${user}"
+                          onsubmit="return validateForm()">
+
+                        <!-- NAME -->
+                        <div class="mb-3">
+                            <label>Name</label>
+                            <input type="text"
+                                   th:field="*{name}"
+                                   class="form-control"
+                                   id="name"
+                                   th:classappend="${errorName} ? 'input-error'">
+                            <small class="text-danger" id="nameError"></small>
+                            <small class="text-danger"
+                                   th:if="${errorName}"
+                                   th:text="${errorName}"></small>
+                        </div>
+
+                        <!-- USERNAME -->
+                        <div class="mb-3">
+                            <label>Username</label>
+                            <input type="text"
+                                   th:field="*{username}"
+                                   class="form-control"
+                                   id="username"
+                                   th:classappend="${errorUsername} ? 'input-error'">
+                            <small class="text-danger" id="usernameError"></small>
+                            <small class="text-danger"
+                                   th:if="${errorUsername}"
+                                   th:text="${errorUsername}"></small>
+                        </div>
+
+                        <!-- PASSWORD -->
+                        <div class="mb-3">
+                            <label>Password</label>
+                            <input type="password"
+                                   th:field="*{password}"
+                                   class="form-control"
+                                   id="password"
+                                   th:classappend="${errorPassword} ? 'input-error'">
+                            <small class="text-danger" id="passwordError"></small>
+                            <small class="text-danger"
+                                   th:if="${errorPassword}"
+                                   th:text="${errorPassword}"></small>
+                        </div>
+
+                        <!-- PHONE -->
+                        <div class="mb-3">
+                            <label>Phone</label>
+                            <input type="text"
+                                   th:field="*{phone}"
+                                   class="form-control"
+                                   id="phone"
+                                   th:classappend="${errorPhone} ? 'input-error'">
+                            <small class="text-danger" id="phoneError"></small>
+                            <small class="text-danger"
+                                   th:if="${errorPhone}"
+                                   th:text="${errorPhone}"></small>
+                        </div>
+
+                        <!-- ADDRESS -->
+                        <div class="mb-3">
+                            <label>Address</label>
+                            <input type="text"
+                                   th:field="*{address}"
+                                   class="form-control"
+                                   id="address"
+                                   th:classappend="${errorAddress} ? 'input-error'">
+                            <small class="text-danger" id="addressError"></small>
+                            <small class="text-danger"
+                                   th:if="${errorAddress}"
+                                   th:text="${errorAddress}"></small>
+                        </div>
+
+                        <!-- BUTTON -->
+                        <div class="d-flex justify-content-between">
+                            <a href="/admin/shippers" class="btn btn-secondary">⬅ Back</a>
+                            <button type="submit" class="btn btn-success">💾 Save</button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- VALIDATE JS -->
+<script>
+    function validateForm() {
+
+        let valid = true;
+
+        let name = document.getElementById("name");
+        let username = document.getElementById("username");
+        let password = document.getElementById("password");
+        let phone = document.getElementById("phone");
+        let address = document.getElementById("address");
+
+        let fields = [name, username, password, phone, address];
+        fields.forEach(f => f.classList.remove("input-error"));
+
+        document.getElementById("nameError").innerText = "";
+        document.getElementById("usernameError").innerText = "";
+        document.getElementById("passwordError").innerText = "";
+        document.getElementById("phoneError").innerText = "";
+        document.getElementById("addressError").innerText = "";
+
+        // NAME
+        if (name.value.trim().length < 2) {
+            name.classList.add("input-error");
+            document.getElementById("nameError").innerText = "Tên phải >= 2 ký tự";
+            valid = false;
+        }
+
+        // USERNAME
+        if (username.value.trim().length < 4) {
+            username.classList.add("input-error");
+            document.getElementById("usernameError").innerText = "Username phải >= 4 ký tự";
+            valid = false;
+        }
+
+        // PASSWORD
+        if (password.value.length < 6) {
+            password.classList.add("input-error");
+            document.getElementById("passwordError").innerText = "Password phải >= 6 ký tự";
+            valid = false;
+        }
+
+        // PHONE
+        let phoneRegex = /^[0-9]{9,11}$/;
+        if (phone.value !== "" && !phoneRegex.test(phone.value)) {
+            phone.classList.add("input-error");
+            document.getElementById("phoneError").innerText = "SĐT không hợp lệ";
+            valid = false;
+        }
+
+        // ADDRESS
+        if (address.value.trim().length < 10) {
+            address.classList.add("input-error");
+            document.getElementById("addressError").innerText = "Địa chỉ phải trên 10 ký tự";
+            valid = false;
+        }
+
+        return valid;
+    }
+</script>
+
+</body>
+</html>

@@ -31,8 +31,14 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             newUser.setEmail(email);
             newUser.setName(oAuth2User.getAttribute("name"));
             newUser.setUsername(email);
+            newUser.setActive(true);
             return userRepository.save(newUser);
         });
+
+        if (!user.getActive()) {
+            getRedirectStrategy().sendRedirect(request, response, "/login?error=account_locked");
+            return;
+        }
 
         request.getSession().setAttribute("user", user);
 

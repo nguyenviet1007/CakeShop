@@ -28,11 +28,6 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-//    @NotNull(message = "Loại bánh không được để trống")
-//    @ManyToOne
-//    @JoinColumn(name = "category_id")
-//    @JsonIgnore
-//    private Category category;
     @NotBlank(message = "Loại bánh không được để trống")
     @Column(name = "category", nullable = false)
     private String category;
@@ -46,7 +41,6 @@ public class Product {
     private String description;
 
     // === [MỚI] 2 TRƯỜNG DÙNG CHO NGHIỆP VỤ BÁN HÀNG ===
-
     @Column(name = "is_visible", nullable = false)
     private Boolean isVisible = true; // Mặc định là luôn hiện (true)
 
@@ -87,6 +81,12 @@ public class Product {
         }
         return sum / feedbacks.size();
     }
+
+    @Transient // Đánh dấu không lưu xuống Database
+    private boolean isFavorited;
+
+    public boolean isIsFavorited() { return isFavorited; }
+    public void setIsFavorited(boolean favorited) { isFavorited = favorited; }
 
     // Method tiện lợi (giữ nguyên nếu có)
     public ProductImage getMainImage() {

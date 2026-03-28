@@ -79,7 +79,7 @@
         </div>
     </div>
 
-    <form th:action="@{/admin/ingredients/save}" th:object="${ingredient}"
+    <form th:action="@{/manager/ingredients/save}" th:object="${ingredient}"
           method="post" id="modalForm" class="needs-validation" novalidate>
 
         <input type="hidden" th:field="*{ingredientId}">

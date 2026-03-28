@@ -169,12 +169,12 @@ public class ProductServiceImpl implements ProductService {
             }
             for (MultipartFile file : imageFiles) {
                 if (!file.isEmpty()) {
-                    String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+                    String fileName =file.getOriginalFilename();
                     Path filePath = uploadPath.resolve(fileName);
                     Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
                     ProductImage newImage = new ProductImage();
-                    newImage.setImageUrl("/uploads/" + fileName);
+                    newImage.setImageUrl(fileName);
                     newImage.setIsMain(false);
                     newImage.setProduct(savedProduct);
                     newImages.add(newImage);
@@ -269,7 +269,7 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
     }
     public List<String> getAllCategories() {
-        return productRepository.findAllDistinctCategories();
+        return productRepository.findDistinctCategories();
     }
 
 

@@ -1,21 +1,24 @@
 package bakery.service;
 
 import bakery.entity.*;
-import bakery.repository.DailyStockRepository;
-import bakery.repository.OrderDetailRepository;
-import bakery.repository.OrderRepository;
-import bakery.repository.UserRepository;
+import bakery.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class OrderServiceImpl implements  OrderService {
+
+    @Autowired
+    private JavaMailSender mailSender;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -29,56 +32,133 @@ public class OrderServiceImpl implements  OrderService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private VoucherRepository voucherRepository;
+
     @Transactional
-    public void saveOrder(User user, List<Cart> cartItems, String paymentMethod) {
-        // 1. Tạo đối tượng Order mới
+    public void saveOrder(User user, List<Cart> cartItems, String paymentMethod,String voucherCode) {
+        // 1. Khởi tạo Order
         Order order = new Order();
         order.setUser(user);
         order.setOrderDate(LocalDateTime.now());
+
+        // Thiết lập trạng thái dựa trên phương thức thanh toán
         if ("COD".equals(paymentMethod)) {
             order.setStatus("UNPAID");
             order.setPayment("CASH");
-            } else {
-            order.setStatus("PAID");
+        } else {
+            order.setStatus("WAIT");
             order.setPayment("ONLINE PAYMENT");
         }
 
-        // 2. Tính tổng tiền và chuẩn bị danh sách chi tiết đơn hàng
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderDetail> details = new ArrayList<>();
+
+        // 2. Duyệt giỏ hàng để kiểm tra kho và tính tiền
         for (Cart item : cartItems) {
-
-            DailyStock stock = dailyStockRepository
-                    .findByProduct_ProductId(item.getProduct().getProductId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tồn kho"));
-
-            if (stock.getAvailableQuantity() < item.getQuantity()) {
-                throw new RuntimeException("Sản phẩm không đủ số lượng trong kho");
+            // Kiểm tra an toàn: Tránh NullPointerException
+            if (item.getProduct() == null) {
+                throw new RuntimeException("Lỗi: Có sản phẩm trống trong giỏ hàng.");
             }
-            stock.setAvailableQuantity(
-                    stock.getAvailableQuantity() - item.getQuantity()
-            );
+
+            Long productId = item.getProduct().getProductId();
+            String productName = item.getProduct().getName(); // Giả sử có getName để log lỗi
+
+            // Lấy tồn kho (Kết hợp: Tìm theo Product ID và Ngày hiện tại nếu hệ thống yêu cầu DailyStock)
+            DailyStock stock = dailyStockRepository
+                    .findByProduct_ProductIdAndDate(productId, LocalDate.now())
+                    .orElseThrow(() -> new RuntimeException("Sản phẩm '" + productName + "' (ID: " + productId + ") không có dữ liệu kho hôm nay."));
+
+            // Kiểm tra số lượng tồn
+            if (stock.getAvailableQuantity() < item.getQuantity()) {
+                throw new RuntimeException("Sản phẩm '" + productName + "' không đủ số lượng. Còn lại: " + stock.getAvailableQuantity());
+            }
+
+            // Cập nhật trừ kho ngay trong vòng lặp (Dirty Checking của Spring Data JPA sẽ tự save khi kết thúc Transaction)
+            stock.setAvailableQuantity(stock.getAvailableQuantity() - item.getQuantity());
             dailyStockRepository.save(stock);
 
+            // Tạo chi tiết đơn hàng
             OrderDetail detail = new OrderDetail();
             detail.setOrder(order);
             detail.setProduct(item.getProduct());
             detail.setQuantity(item.getQuantity());
-            // Lưu giá tại thời điểm mua để tránh việc sau này sản phẩm đổi giá làm sai lệch hóa đơn
+
+            // Chốt giá tại thời điểm mua (Rất quan trọng)
             BigDecimal priceAtPurchase = item.getProduct().getPrice();
             detail.setPrice(priceAtPurchase);
-            BigDecimal itemTotal = priceAtPurchase.multiply(BigDecimal.valueOf(item.getQuantity()));
-            // Cộng dồn vào tổng hóa đơn
-            total = total.add(itemTotal);
+
+            // Tính tổng tiền
+            BigDecimal itemSubtotal = priceAtPurchase.multiply(BigDecimal.valueOf(item.getQuantity()));
+            totalAmount = totalAmount.add(itemSubtotal);
+
             details.add(detail);
         }
-        order.setTotalAmount(total);
 
-        // 3. Lưu Order vào Database trước để lấy ID
+        if (voucherCode != null && !voucherCode.isEmpty()) {
+            Voucher voucher = voucherRepository.findByCodeIgnoreCase(voucherCode).orElse(null);
+
+            if (voucher != null && voucher.getActive() &&
+                    totalAmount.compareTo(voucher.getMinOrderValue()) >= 0) {
+
+                // Tính số tiền giảm: (Tổng * % / 100)
+                BigDecimal discount = totalAmount.multiply(new BigDecimal(voucher.getDiscountPercent()))
+                        .divide(new BigDecimal(100));
+
+                // Kiểm tra mức giảm tối đa
+                if (discount.compareTo(voucher.getMaxDiscount()) > 0) {
+                    discount = voucher.getMaxDiscount();
+                }
+
+                // Trừ tiền giảm giá vào tổng đơn hàng
+                totalAmount = totalAmount.subtract(discount);
+            }
+        }
+
+        // 3. Hoàn tất và lưu vào Database
+        order.setTotalAmount(totalAmount);
+
+        // Lưu Order trước để sinh ID (Cần thiết cho quan hệ 1-N với OrderDetail)
         Order savedOrder = orderRepository.save(order);
 
-        // 4. Lưu tất cả chi tiết đơn hàng
+        // Lưu hàng loạt chi tiết đơn hàng để tối ưu performance
         orderDetailRepository.saveAll(details);
+        sendOrderConfirmationEmail(user, cartItems,totalAmount);
+    }
+
+    private void sendOrderConfirmationEmail(User user, List<Cart> items,BigDecimal totalAmount) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("phanmanhtuan015@gmail.com");
+        message.setTo(user.getEmail());
+        message.setSubject("Xác nhận đơn hàng thành công - [Mã Đơn Hàng]");
+
+        StringBuilder content = new StringBuilder();
+        content.append("Chào ").append(user.getName()).append(",\n\n");
+        content.append("Đơn hàng của bạn đã được tiếp nhận thành công.\n");
+        content.append("Trạng thái: Đang chờ xử lý\n\n");
+        content.append("Chi tiết giỏ hàng:\n");
+
+        for (Cart item : items) {
+            content.append("- ")
+                    .append(item.getProduct().getName())
+                    .append(" - ")
+                    .append(item.getProduct().getPrice())
+                    .append(" x ")
+                    .append(item.getQuantity())
+                    .append("\n");
+        }
+        content.append("Tổng hóa đơn: ").append(totalAmount).append(",\n\n");
+
+        content.append("\nCảm ơn bạn đã mua sắm tại cửa hàng!");
+
+        message.setText(content.toString());
+
+        try {
+            mailSender.send(message);
+        } catch (Exception e) {
+            // Log lỗi nhưng không làm roll-back giao dịch chính nếu bạn muốn
+            System.err.println("Lỗi gửi mail: " + e.getMessage());
+        }
     }
 
     public void validateOrderInfo(User user) {
@@ -128,12 +208,12 @@ public class OrderServiceImpl implements  OrderService {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
     }
-    public List<Order> getOrdersByCustomer(Long id){
-
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-
-        return orderRepository.findByUserId(user.getId());
-    }
+//    public List<Order> getOrdersByCustomer(Long id){
+//
+//        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        return orderRepository.findByUserId(user.getId());
+//    }
 
     public boolean checkUserPurchasedProduct(Long userId, Long productId) {
         return orderRepository.hasUserPurchasedProduct(userId, productId);

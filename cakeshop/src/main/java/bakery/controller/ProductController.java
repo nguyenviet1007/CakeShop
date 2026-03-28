@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/admin/products")
+@RequestMapping("/manager/products")
 public class ProductController {
 
     private final ProductService productService;
@@ -72,7 +72,7 @@ public class ProductController {
     public String editForm(@PathVariable Long id, Model model) {
         Product product = productService.getById(id);
         if (product == null) {
-            return "redirect:/admin/products";
+            return "redirect:/manager/products";
         }
         model.addAttribute("product", product);
         // 4. Gửi list nguyên liệu sang View (cả khi edit cũng cần)
@@ -107,7 +107,7 @@ public class ProductController {
             productService.save(product, imageFiles, mainImageId, deleteImageIds, recipesJson);
 
             redirectAttributes.addFlashAttribute("success", "Lưu sản phẩm thành công!");
-            return "redirect:/admin/products";
+            return "redirect:/manager/products";
 
         } catch (IllegalArgumentException ex) {
             // Thêm lỗi unique name vào field "name" để hiển thị dưới input
@@ -136,7 +136,7 @@ public class ProductController {
     public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         productService.delete(id);
         redirectAttributes.addFlashAttribute("success", "Xóa sản phẩm thành công!");
-        return "redirect:/admin/products";
+        return "redirect:/manager/products";
     }
     @GetMapping("/production-plan")
     public String productionPlan(Model model) {

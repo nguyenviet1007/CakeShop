@@ -17,7 +17,7 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
             "FROM OrderDetail od " +
             "WHERE od.order.user.id = :userId " +
             "AND od.product.productId = :productId " +
-            "AND od.order.status = 'COMPLETED'")
+            "AND od.order.status = 'DELIVERED'")
     boolean hasUserPurchasedProduct(@Param("userId") Long userId, @Param("productId") Long productId);
 
     @Transactional

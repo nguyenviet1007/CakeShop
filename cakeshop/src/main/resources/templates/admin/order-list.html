@@ -35,12 +35,13 @@
             .modal-footer, .btn-close { display: none !important; }
         }
     </style>
+
 </head>
 <body>
 
 <div class="glass-toolbar d-flex justify-content-between align-items-center shadow-sm">
     <div class="d-flex align-items-center">
-        <a href="/admin/products" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/manager/products" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
         <h4 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-clipboard-list text-info me-2"></i>Quản Lý Đơn Hàng</h4>
     </div>
 </div>
@@ -50,19 +51,32 @@
     <div class="card mb-4 border-0 shadow-sm rounded-4">
         <div class="card-body">
             <div class="row g-3 align-items-end">
-                <div class="col-12 mb-2">
-                    <ul class="nav nav-pills" id="statusTabs">
-                        <li class="nav-item"><button class="nav-link active" data-filter="">Tất cả trạng thái</button></li>
-                        <li class="nav-item"><button class="nav-link" data-filter="PENDING">Chờ xử lý</button></li>
-                        <li class="nav-item"><button class="nav-link" data-filter="SHIPPING">Đang giao</button></li>
-                        <li class="nav-item"><button class="nav-link" data-filter="COMPLETED">Hoàn thành</button></li>
-                        <li class="nav-item"><button class="nav-link" data-filter="CANCELLED">Đã hủy</button></li>
-                    </ul>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Trạng thái:</label>
+                    <select id="statusFilter" class="form-select" onchange="updateStatusAndFilter()">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="WAIT">Chờ xác nhận</option>
+                        <option value="UNPAID">Chưa thanh toán</option>
+                        <option value="PAID">Đã thanh toán</option>
+                        <option value="assigned">Đã phân shipper</option>
+                        <option value="SHIPPING">Đang giao</option>
+                        <option value="DELIVERED">Đã giao hàng</option>
+                        <option value="COMPLETED">Hoàn thành</option>
+                        <option value="CANCELLED">Đã hủy</option>
+                        <option value="FAILED">Thất bại</option>
+                    </select>
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">Ngày giao dịch:</label>
-                    <input type="date" id="statsDate" class="form-control" onchange="getRevenueStats()">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Khoảng ngày giao dịch:</label>
+                    <div class="input-group input-group-sm">
+                        <input type="date" id="startDate" class="form-control shadow-sm" onchange="getRevenueStats()">
+                        <span class="input-group-text bg-white border-start-0 border-end-0">đến</span>
+                        <input type="date" id="endDate" class="form-control shadow-sm" onchange="getRevenueStats()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="resetDate()">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="col-md-2">
@@ -144,30 +158,72 @@
                 </span>
                             </td>
                             <td class="total-amount" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
-                            <td>
-                                <span th:if="${order.status == 'PENDING'}" class="badge-status bg-pending">Chờ xử lý</span>
-                                <span th:if="${order.status == 'SHIPPING'}" class="badge-status bg-info text-white">Đang giao</span>
-                                <span th:if="${order.status == 'COMPLETED'}" class="badge-status bg-completed">Hoàn thành</span>
-                                <span th:if="${order.status == 'CANCELLED'}" class="badge-status bg-cancelled">Đã hủy</span>
+                            <td class="text-center">
+                                <div th:switch="${order.status}">
+                                    <span th:case="'UNPAID'" class="badge rounded-pill bg-secondary px-3">Chưa thanh toán</span>
+                                    <span th:case="'PAID'" class="badge rounded-pill bg-info text-dark px-3">Đã thanh toán</span>
+                                    <span th:case="'WAIT'" class="badge rounded-pill bg-info text-dark px-3">Chờ xác nhận</span>
+                                    <span th:case="'assigned'" class="badge rounded-pill bg-primary px-3">Đã phân Shipper</span>
+                                    <span th:case="'SHIPPING'" class="badge rounded-pill bg-warning text-dark px-3">Đang giao hàng</span>
+                                    <span th:case="'DELIVERED'" class="badge rounded-pill bg-info text-white px-3">Đã giao tận nơi</span>
+                                    <span th:case="'COMPLETED'" class="badge rounded-pill bg-success px-3">Hoàn thành</span>
+                                    <span th:case="'CANCELLED'" class="badge rounded-pill bg-danger px-3">Đã hủy đơn</span>
+                                    <span th:case="'FAILED'" class="badge rounded-pill bg-dark px-3">Giao thất bại</span>
+
+                                    <span th:case="*" class="badge rounded-pill bg-light text-dark border px-3" th:text="${order.status}"></span>
+                                </div>
                             </td>
                             <td class="text-center">
-                                <button class="btn btn-info text-white btn-action" th:onclick="|openDetailModal(${order.id})|"><i class="fa-solid fa-eye"></i></button>
-                                <th:block th:if="${order.status == 'PENDING'}">
-                                    <button class="btn btn-primary btn-action" th:onclick="|changeStatus(${order.id}, 'SHIPPING')|"><i class="fa-solid fa-truck"></i></button>
+                                <button class="btn btn-sm btn-outline-primary btn-action"
+                                        th:onclick="|openInfoModal(${order.id})|"
+                                        title="Chi tiết địa chỉ">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                </button>
+
+                                <button class="btn btn-sm btn-info text-white btn-action"
+                                        th:onclick="|openDetailModal(${order.id})|"
+                                        title="Xem hóa đơn">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <th:block th:if="${order.status == 'WAIT'}">
+                                    <button class="btn btn-sm btn-success me-1"
+                                            th:onclick="|changeStatus(${order.id}, 'PAID')|">
+                                        <i class="fa-solid fa-check"></i> Xác nhận Thanh toán
+                                    </button>
+                                </th:block>
+                                <th:block th:if="${order.status == 'UNPAID' or order.status == 'PAID'}">
+                                    <button class="btn btn-sm btn-success btn-action" th:onclick="|changeStatus(${order.id}, 'ASSIGNED')|">
+                                        <i class="fa-solid fa-user-check"></i>
+                                    </button>
+                                </th:block>
+                                <th:block th:if="${order.status == 'UNPAID' or order.status == 'WAIT'}">
+                                    <button class="btn btn-sm btn-success btn-action" th:onclick="|changeStatus(${order.id}, 'CANCELLED')|">
+                                        <i class="fa-solid fa-xmark"></i>                                    </button>
+                                </th:block>
+                                <th:block th:if="${order.status == 'DELIVERED'}">
+                                    <button class="btn btn-sm btn-success btn-action"
+                                            th:onclick="|changeStatus(${order.id}, 'COMPLETED')|"
+                                            title="Xác nhận Hoàn thành">
+                                        <i class="fa-solid fa-flag-checkered"></i> </button>
                                 </th:block>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(orders)}">
                             <td colspan="7" class="text-center py-5 text-muted">Không tìm thấy đơn hàng nào.</td>
                         </tr>
+
                         </tbody>
+
                     </table>
-                </div>
+                </div> <div class="p-3 border-top bg-light">
+                <div th:replace="~{fragments/pagination :: pagination(${pageData}, '/manager/orders')}"></div>
+            </div>
             </div>
         </div>
     </div>
 </div>
 
+</div>
 <div class="modal fade" id="orderDetailModal" tabindex="-1">
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -183,80 +239,198 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="orderInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-info me-2"></i>Chi Tiết Quản Trị Đơn Hàng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="infoModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     let currentStatus = '';
 
     // Xử lý click Tab trạng thái
-    document.querySelectorAll('#statusTabs .nav-link').forEach(tab => {
-      tab.addEventListener('click', function() {
-        document.querySelectorAll('#statusTabs .nav-link').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        currentStatus = this.getAttribute('data-filter');
-        getRevenueStats(); // Gọi lọc lại khi đổi tab
-      });
-    });
+    function updateStatusAndFilter() {
+    // Cập nhật biến global currentStatus từ giá trị của select
+    currentStatus = document.getElementById('statusFilter').value;
+
+    // Gọi hàm lọc đã sửa ở bước trước (hàm dùng startDate/endDate)
+    getRevenueStats(0);
+}
 
     // Hàm Lọc Tổng Hợp (Gộp Ngày, Phương thức, Kênh, Tìm kiếm, Trạng thái)
-    function getRevenueStats() {
-      const date = document.getElementById('statsDate').value; // Nếu trống sẽ là chuỗi rỗng
-      const method = document.getElementById('statsMethod').value;
-      const channel = document.getElementById('statsChannel').value;
-      const search = document.getElementById('searchFilter').value;
+    // Thêm tham số page mặc định là 0
+    // 1. Thêm tham số pageNumber
+    // Cập nhật hàm lọc tổng hợp
+function getRevenueStats(pageNumber = 0) {
+    // Lấy giá trị từ 2 ô ngày mới
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
 
-      const wrapper = document.getElementById('tableWrapper');
-      wrapper.style.opacity = '0.5';
+    const method = document.getElementById('statsMethod').value;
+    const channel = document.getElementById('statsChannel').value;
+    const search = document.getElementById('searchFilter').value;
 
-      // Xây dựng URL động
-      let url = `/admin/orders/statistics?date=${date}&method=${method}&channel=${channel}&search=${search}&status=${currentStatus}`;
+    const wrapper = document.getElementById('tableWrapper');
+    wrapper.style.opacity = '0.5';
 
-      fetch(url)
-          .then(res => res.text())
-          .then(html => {
-              wrapper.innerHTML = html;
-              wrapper.style.opacity = '1';
+    // Cập nhật URL: thay date bằng startDate và endDate
+    let url = `/manager/orders/statistics?startDate=${startDate}&endDate=${endDate}&method=${method}&channel=${channel}&search=${search}&status=${currentStatus}&page=${pageNumber}`;
 
-              const total = document.getElementById('hiddenTotal').value || 0;
-              const count = document.getElementById('hiddenCount').value || 0;
-
-              document.getElementById('resTotal').innerText = new Intl.NumberFormat('vi-VN', {
-                  style: 'currency', currency: 'VND'
-              }).format(total);
-              document.getElementById('resCount').innerText = count;
-          })
-          .catch(err => {
-              wrapper.style.opacity = '1';
-              console.error(err);
-          });
-    }
-
-    function openDetailModal(orderId) {
-      const modalContainer = document.getElementById('modalContainer');
-      modalContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-info" role="status"></div></div>';
-      fetch(`/admin/orders/${orderId}/details`)
+    fetch(url)
         .then(res => res.text())
         .then(html => {
-            modalContainer.innerHTML = html;
-            new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+            wrapper.innerHTML = html;
+            wrapper.style.opacity = '1';
+
+            // Cập nhật số liệu Header (giữ nguyên logic cũ của bạn)
+            const totalVal = document.getElementById('hiddenTotal').value || 0;
+            const countVal = document.getElementById('hiddenCount').value || 0;
+
+            document.getElementById('resTotal').innerText = new Intl.NumberFormat('vi-VN', {
+                style: 'currency', currency: 'VND'
+            }).format(totalVal);
+            document.getElementById('resCount').innerText = countVal;
+
+            overridePagination();
+        })
+        .catch(err => {
+            console.error("Lỗi tải dữ liệu:", err);
+            wrapper.style.opacity = '1';
+        });
+}
+
+// Thêm hàm reset ngày nếu cần
+function resetDate() {
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    getRevenueStats();
+}
+
+    // 2. Hàm ghi đè các nút phân trang của Fragment dùng chung
+    function overridePagination() {
+        const links = document.querySelectorAll('#tableWrapper .pagination .page-link');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.includes('page=')) {
+                // Lấy số trang từ link (ví dụ: ?page=1)
+                const urlParams = new URLSearchParams(href.split('?')[1]);
+                const p = urlParams.get('page');
+
+                link.setAttribute('href', 'javascript:void(0)'); // Hủy link load trang
+                link.onclick = function() {
+                    getRevenueStats(parseInt(p)); // Chuyển trang bằng AJAX
+                };
+            }
         });
     }
 
+    // 3. Khi trang vừa load xong
+    document.addEventListener('DOMContentLoaded', () => {
+        getRevenueStats(0);
+    });
+
+    function openDetailModal(orderId) {
+        const modalContainer = document.getElementById('modalContainer');
+        modalContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-info" role="status"></div></div>';
+        fetch(`/manager/orders/${orderId}/details`)
+            .then(res => res.text())
+            .then(html => {
+                modalContainer.innerHTML = html;
+                new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+            });
+    }
+
     function changeStatus(id, status) {
-      Swal.fire({
-          title: 'Xác nhận?',
-          text: `Chuyển sang ${status}?`,
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'Đồng ý'
-      }).then((result) => {
-          if (result.isConfirmed) {
-              fetch(`/admin/orders/${id}/status?status=${status}`, { method: 'POST' })
-              .then(res => res.json())
-              .then(data => {
-                  if(data.status === 'success') getRevenueStats();
-              });
-          }
-      });
+        Swal.fire({
+            title: 'Xác nhận thay đổi?',
+            text: `Bạn có chắc muốn chuyển đơn hàng #${id} sang trạng thái: ${status}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Đồng ý',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Hiển thị loading để người dùng không bấm liên tục
+                Swal.showLoading();
+
+                fetch(`/manager/orders/${id}/status?status=${status}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest' // Đánh dấu đây là request AJAX
+                    }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công!',
+                                text: data.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+
+                            // QUAN TRỌNG: Gọi lại hàm lấy dữ liệu để cập nhật Fragment Table mà không load lại trang
+                            getRevenueStats();
+                        } else {
+                            Swal.fire('Lỗi!', data.message, 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Lỗi!', 'Không thể kết nối đến máy chủ', 'error');
+                    });
+            }
+        });
+    }
+    // Khai báo biến global để quản lý instance tránh xung đột
+    let infoModalInstance = null;
+
+    function openInfoModal(orderId) {
+        const bodyContainer = document.getElementById('infoModalBody');
+        const modalElement = document.getElementById('orderInfoModal');
+
+        // 1. Hiển thị trạng thái đang tải
+        bodyContainer.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Đang tải thông tin địa chỉ...</p>
+        </div>`;
+
+        // 2. Khởi tạo Modal nếu chưa có
+        if (!infoModalInstance) {
+            infoModalInstance = new bootstrap.Modal(modalElement);
+        }
+        infoModalInstance.show();
+
+        // 3. Fetch dữ liệu từ server
+        fetch(`/manager/orders/${orderId}/info`)
+            .then(response => {
+                if (!response.ok) throw new Error('Không thể tải dữ liệu');
+                return response.text();
+            })
+            .then(html => {
+                // Chỉ cập nhật nội dung khi dữ liệu đã về tới
+                bodyContainer.innerHTML = html;
+            })
+            .catch(err => {
+                bodyContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Lỗi: ${err.message}
+                </div>`;
+            });
     }
 
     // Load tất cả khi vừa mở trang (vì ô date đang trống)

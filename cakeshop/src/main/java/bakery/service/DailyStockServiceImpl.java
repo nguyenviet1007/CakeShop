@@ -3,9 +3,12 @@ package bakery.service;
 import bakery.dto.request.DailyStockUpdateDTO;
 import bakery.entity.DailyStock;
 import bakery.entity.Product;
+import bakery.entity.StockAdjustmentLog;
 import bakery.repository.DailyStockRepository;
 import bakery.repository.ProductRepository;
+import bakery.repository.StockAdjustmentLogRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -18,7 +21,8 @@ public class DailyStockServiceImpl implements DailyStockService {
 
     private final DailyStockRepository dailyStockRepo;
     private final ProductRepository productRepo;
-
+    @Autowired
+    private StockAdjustmentLogRepository logRepo; // Inject Repository mới vào
 
     public DailyStockServiceImpl(DailyStockRepository dailyStockRepo, ProductRepository productRepo) {
         this.dailyStockRepo = dailyStockRepo;
@@ -76,5 +80,29 @@ public class DailyStockServiceImpl implements DailyStockService {
                 dailyStockRepo.save(newStock);
             }
         }
+    }
+    @Override
+    @Transactional
+    public void adjustAvailableQuantity(Long stockId, int amount, String reason) {
+        DailyStock stock = dailyStockRepo.findById(stockId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy dữ liệu kho!"));
+
+        // 1. Cập nhật số lượng trên kệ
+        int currentAvailable = (stock.getAvailableQuantity() != null) ? stock.getAvailableQuantity() : 0;
+        int newAvailable = currentAvailable + amount;
+
+        if (newAvailable < 0) {
+            throw new RuntimeException("Số lượng trên kệ không thể nhỏ hơn 0 sau khi điều chỉnh!");
+        }
+        stock.setAvailableQuantity(newAvailable);
+        dailyStockRepo.save(stock);
+
+        // 2. LƯU VÀO DATABASE BẢNG LOG
+        StockAdjustmentLog log = new StockAdjustmentLog();
+        log.setDailyStock(stock); // Gán thực thể stock để Hibernate tự tạo Khóa Ngoại
+        log.setAmount(amount);
+        log.setReason(reason);
+
+        logRepo.save(log); // Lưu dòng nhật ký mới
     }
 }

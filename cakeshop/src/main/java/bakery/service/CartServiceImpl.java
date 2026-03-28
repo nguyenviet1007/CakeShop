@@ -8,9 +8,11 @@ import bakery.entity.User;
 import bakery.repository.CartRepository;
 import bakery.repository.DailyStockRepository;
 import bakery.repository.ProductRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.beans.Transient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -42,11 +44,13 @@ public class CartServiceImpl {
     }
 
     // Xóa sạch giỏ hàng
+    @Transactional
     public void clearCart(Long userId) {
         cartRepository.deleteByUserId(userId);
     }
 
     // Logic cho icon Giỏ hàng ở trang chủ
+    @Transactional
     public void addToCart(Long userId, Long productId, Integer quantity) {
         // Kiểm tra userId không được null
         if (userId == null) {
@@ -65,13 +69,20 @@ public class CartServiceImpl {
         DailyStock stock = dailyStockRepository.findByProductAndDate(product, LocalDate.now())
                 .orElseThrow(() -> new RuntimeException("Sản phẩm hiện không có trong kho"));
 
+        if (stock.getAvailableQuantity() < quantity) {
+            throw new RuntimeException("Số lượng trong kho không đủ (Hiện còn: " + stock.getAvailableQuantity() + ")");
+        }
         // Tìm xem trong giỏ đã có sản phẩm này chưa
         Optional<Cart> existingCart = cartRepository.findByUserIdAndProductProductId(userId, productId);
 
         if (existingCart.isPresent()) {
             // Nếu có rồi thì cộng dồn số lượng
             Cart cart = existingCart.get();
-            cart.setQuantity(cart.getQuantity() + quantity);
+            Integer quan=cart.getQuantity() + quantity;
+            if (stock.getAvailableQuantity() < quan) {
+                throw new RuntimeException("Đã đạt số lượng giới hạn  " + stock.getAvailableQuantity() + " sản phẩm");
+            }
+            cart.setQuantity(quan);
             cartRepository.save(cart);
         } else {
             // Nếu chưa có thì tạo mới record
@@ -99,6 +110,7 @@ public class CartServiceImpl {
         }
     }
     // Logic cho nút + và - trong mockup giỏ hàng
+
     public void updateQuantity(Long cartId, Integer newQuantity) {
         if (newQuantity <= 0) {
             cartRepository.deleteById(cartId);
@@ -113,7 +125,7 @@ public class CartServiceImpl {
                 .orElseThrow(() -> new RuntimeException("Sản phẩm hiện không có trong kho"));
 
         if (stock.getAvailableQuantity() < newQuantity) {
-            throw new RuntimeException("Kho chỉ còn " + stock.getAvailableQuantity() + " sản phẩm");
+            throw new RuntimeException("Đã đạt số lượng giới hạn  " + stock.getAvailableQuantity() + " sản phẩm");
         }
 
         cart.setQuantity(newQuantity);
