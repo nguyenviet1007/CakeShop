@@ -32,7 +32,7 @@
             <hr class="mx-3">
             <ul class="list-unstyled">
                 <li><a href="#"><i class="fa-solid fa-gauge me-2"></i> Tổng quan</a></li>
-                <li><a th:href="@{/admin/products}" class="active"><i class="fa-solid fa-wheat-awn me-2"></i> Sản phẩm</a></li>
+                <li><a th:href="@{/manager/products}" class="active"><i class="fa-solid fa-wheat-awn me-2"></i> Sản phẩm</a></li>
             </ul>
         </nav>
 
@@ -113,7 +113,7 @@
                                 <i class="fa-solid fa-ban me-2"></i>Chưa có dữ liệu
                             </button>
 
-                            <a th:href="@{/admin/ingredients}" class="btn btn-outline-primary btn-sm mt-2">
+                            <a th:href="@{/manager/ingredients}" class="btn btn-outline-primary btn-sm mt-2">
                                 <i class="fa-solid fa-truck-moving me-1"></i> Đi đến kho nguyên liệu
                             </a>
                         </div>
@@ -319,7 +319,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 // Gọi API xuất kho của Controller cũ
-                fetch('/admin/ingredients/export', {
+                fetch('/manager/ingredients/export', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(exportList)
@@ -330,7 +330,7 @@
                         Swal.fire('Thành công!', 'Đã xuất kho và lưu lịch sử.', 'success')
                         .then(() => {
                             // Xong thì đưa người dùng về trang Danh sách Nguyên liệu
-                            window.location.href = '/admin/ingredients';
+                            window.location.href = '/manager/ingredients';
                         });
                     } else {
                         Swal.fire('Lỗi!', data.message || 'Có lỗi xảy ra', 'error');

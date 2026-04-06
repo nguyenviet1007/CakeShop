@@ -41,7 +41,7 @@
 
 <div class="pos-header d-flex justify-content-between align-items-center">
     <div>
-        <a th:href="@{/admin/daily-stock}" class="text-secondary me-3 fs-5"><i class="fa-solid fa-arrow-left"></i></a>
+        <a th:href="@{/manager/daily-stock}" class="text-secondary me-3 fs-5"><i class="fa-solid fa-arrow-left"></i></a>
         <span class="fs-5 fw-bold"><i class="fa-solid fa-cash-register text-info me-2"></i>Thu Ngân POS</span>
     </div>
     <div class="fw-bold text-success"><i class="fa-solid fa-circle-user me-1"></i> Nhân viên: Admin</div>
@@ -72,7 +72,7 @@
                         <i class="fa-solid fa-tag"></i> -<span th:text="${stock.product.discountPercent}"></span>%
                     </span>
 
-                    <img th:src="${stock.product.mainImage != null ? stock.product.mainImage.imageUrl : 'https://via.placeholder.com/300x200?text=Bakery'}" alt="Bánh">
+                    <img th:src="@{/uploads/{file}(file=${stock.product.mainImage.imageUrl})}" alt="Bánh">
 
                     <div class="p-2 text-center">
                         <h6 class="mb-1 text-truncate fw-bold product-name" th:text="${stock.product.name}">Tên Bánh</h6>
@@ -147,8 +147,15 @@
 
                 <div id="transferArea" class="text-center d-none py-4 border rounded-3 bg-light">
                     <i class="fa-solid fa-building-columns fa-3x text-info mb-2"></i>
-                    <p class="mb-0 fw-bold">Vui lòng quét mã QR Ngân hàng</p>
-                    <small class="text-muted">Xác nhận sau khi khách đã chuyển thành công</small>
+                    <p class="mb-0 fw-bold text-dark">Quét mã để chuyển khoản</p>
+
+                    <div class="mt-3">
+                        <img id="posQrImg" src="" alt="Mã QR Thanh Toán"
+                             class="img-fluid shadow-sm rounded border d-none"
+                             style="max-width: 220px; border-width: 5px !important;">
+                    </div>
+
+                    <p class="mt-2 mb-0 small text-muted">Vui lòng kiểm tra kỹ số tiền trước khi xác nhận</p>
                 </div>
             </div>
             <div class="modal-footer border-0">
@@ -285,15 +292,37 @@
         new bootstrap.Modal(document.getElementById('paymentModal')).show();
     }
 
-    function togglePayMethod(method) {
-        if (method === 'CASH') {
-            document.getElementById('cashArea').classList.remove('d-none');
-            document.getElementById('transferArea').classList.add('d-none');
-        } else {
-            document.getElementById('cashArea').classList.add('d-none');
-            document.getElementById('transferArea').classList.remove('d-none');
+    /* Logic Thanh Toán */
+function togglePayMethod(method) {
+    const cashArea = document.getElementById('cashArea');
+    const transferArea = document.getElementById('transferArea');
+    const qrImg = document.getElementById('posQrImg');
+
+    if (method === 'CASH') {
+        cashArea.classList.remove('d-none');
+        transferArea.classList.add('d-none');
+    } else {
+        cashArea.classList.add('d-none');
+        transferArea.classList.remove('d-none');
+
+        // Tự động gọi API lấy QR khi chọn chuyển khoản
+        if (currentTotal > 0) {
+            // Hiển thị trạng thái đang tải (nếu muốn)
+            fetch(`/manager/pos/generate-qr?amount=${currentTotal}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (qrImg) {
+                        qrImg.src = data.qrUrl;
+                        qrImg.classList.remove('d-none');
+                    }
+                })
+                .catch(err => {
+                    console.error('Lỗi lấy mã QR:', err);
+                    Swal.fire('Lỗi', 'Không thể tạo mã QR lúc này', 'error');
+                });
         }
     }
+}
 
     function calculateChange() {
         const pay = parseFloat(document.getElementById('customerMoney').value) || 0;
@@ -327,7 +356,7 @@
             }))
         };
 
-        fetch('/admin/pos/create', {
+        fetch('/manager/pos/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(orderData)
@@ -344,7 +373,7 @@
                 if (payModal) payModal.hide();
 
                 // 2. Lấy HTML hóa đơn
-                fetch(`/admin/orders/${data.orderId}/details`)
+                fetch(`/manager/orders/${data.orderId}/details`)
                 .then(res => res.text())
                 .then(html => {
                     document.getElementById('posInvoiceContent').innerHTML = html;
