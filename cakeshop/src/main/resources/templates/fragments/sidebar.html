@@ -3,29 +3,29 @@
 <head>
     <style>
         /* Sidebar Style */
-    .sidebar {
-        min-height: 100vh;
-        background: #343a40; /* Màu nền tối */
-        color: white;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    }
+        .sidebar {
+            min-height: 100vh;
+            background: #343a40; /* Màu nền tối */
+            color: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
 
-    .sidebar a {
-        color: #adb5bd; /* Màu chữ xám nhạt */
-        text-decoration: none;
-        padding: 12px 20px;
-        display: block;
-        transition: all 0.3s;
-        border-left: 3px solid transparent;
-    }
+        .sidebar a {
+            color: #adb5bd; /* Màu chữ xám nhạt */
+            text-decoration: none;
+            padding: 12px 20px;
+            display: block;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
 
-    /* Hiệu ứng khi di chuột hoặc đang chọn (Active) */
-    .sidebar a:hover, .sidebar a.active {
-        background: #495057;
-        color: #ffc107; /* Màu vàng */
-        border-left: 3px solid #ffc107; /* Vạch vàng bên trái */
-        font-weight: 500;
-    }
+        /* Hiệu ứng khi di chuột hoặc đang chọn (Active) */
+        .sidebar a:hover, .sidebar a.active {
+            background: #495057;
+            color: #ffc107; /* Màu vàng */
+            border-left: 3px solid #ffc107; /* Vạch vàng bên trái */
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -62,6 +62,12 @@
             <a href="/admin/orders"
                th:classappend="${activePage == 'orders'} ? 'active' : ''">
                 <i class="fa-solid fa-cart-shopping me-2"></i> Đơn hàng
+            </a>
+        </li>
+        <li>
+            <a href="/admin/shippers"
+               th:classappend="${activePage == 'shippers'} ? 'active' : ''">
+                <i class="fa-solid fa-cart-shopping me-2"></i> Quản lí shipper
             </a>
         </li>
     </ul>

@@ -293,36 +293,36 @@
     }
 
     /* Logic Thanh Toán */
-function togglePayMethod(method) {
-    const cashArea = document.getElementById('cashArea');
-    const transferArea = document.getElementById('transferArea');
-    const qrImg = document.getElementById('posQrImg');
+    function togglePayMethod(method) {
+        const cashArea = document.getElementById('cashArea');
+        const transferArea = document.getElementById('transferArea');
+        const qrImg = document.getElementById('posQrImg');
 
-    if (method === 'CASH') {
-        cashArea.classList.remove('d-none');
-        transferArea.classList.add('d-none');
-    } else {
-        cashArea.classList.add('d-none');
-        transferArea.classList.remove('d-none');
+        if (method === 'CASH') {
+            cashArea.classList.remove('d-none');
+            transferArea.classList.add('d-none');
+        } else {
+            cashArea.classList.add('d-none');
+            transferArea.classList.remove('d-none');
 
-        // Tự động gọi API lấy QR khi chọn chuyển khoản
-        if (currentTotal > 0) {
-            // Hiển thị trạng thái đang tải (nếu muốn)
-            fetch(`/manager/pos/generate-qr?amount=${currentTotal}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (qrImg) {
-                        qrImg.src = data.qrUrl;
-                        qrImg.classList.remove('d-none');
-                    }
-                })
-                .catch(err => {
-                    console.error('Lỗi lấy mã QR:', err);
-                    Swal.fire('Lỗi', 'Không thể tạo mã QR lúc này', 'error');
-                });
+            // Tự động gọi API lấy QR khi chọn chuyển khoản
+            if (currentTotal > 0) {
+                // Hiển thị trạng thái đang tải (nếu muốn)
+                fetch(`/manager/pos/generate-qr?amount=${currentTotal}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (qrImg) {
+                            qrImg.src = data.qrUrl;
+                            qrImg.classList.remove('d-none');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Lỗi lấy mã QR:', err);
+                        Swal.fire('Lỗi', 'Không thể tạo mã QR lúc này', 'error');
+                    });
+            }
         }
     }
-}
 
     function calculateChange() {
         const pay = parseFloat(document.getElementById('customerMoney').value) || 0;
@@ -361,35 +361,35 @@ function togglePayMethod(method) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(orderData)
         })
-        .then(response => {
-            if (!response.ok) return response.json().then(err => { throw err; });
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // 1. Ẩn modal thanh toán cũ trước
-                const payModalEl = document.getElementById('paymentModal');
-                const payModal = bootstrap.Modal.getInstance(payModalEl);
-                if (payModal) payModal.hide();
+            .then(response => {
+                if (!response.ok) return response.json().then(err => { throw err; });
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // 1. Ẩn modal thanh toán cũ trước
+                    const payModalEl = document.getElementById('paymentModal');
+                    const payModal = bootstrap.Modal.getInstance(payModalEl);
+                    if (payModal) payModal.hide();
 
-                // 2. Lấy HTML hóa đơn
-                fetch(`/manager/orders/${data.orderId}/details`)
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById('posInvoiceContent').innerHTML = html;
+                    // 2. Lấy HTML hóa đơn
+                    fetch(`/manager/orders/${data.orderId}/details`)
+                        .then(res => res.text())
+                        .then(html => {
+                            document.getElementById('posInvoiceContent').innerHTML = html;
 
-                    // 3. Hiển thị modal hóa đơn
-                    const invModal = new bootstrap.Modal(document.getElementById('posInvoiceModal'));
-                    invModal.show();
+                            // 3. Hiển thị modal hóa đơn
+                            const invModal = new bootstrap.Modal(document.getElementById('posInvoiceModal'));
+                            invModal.show();
 
-                    clearCart();
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Lỗi:', error);
-            Swal.fire('Thất bại', error.message || 'Lỗi hệ thống', 'error');
-        });
+                            clearCart();
+                        });
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi:', error);
+                Swal.fire('Thất bại', error.message || 'Lỗi hệ thống', 'error');
+            });
     }
 
     function printInvoice() {

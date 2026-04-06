@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Voucher - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+    <style>
+        .filter-group .input-group-text {
+            font-size: 0.85rem;
+            background: #f8f9fa;
+        }
+
+        .filter-group input {
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div th:replace="~{admin/fragments/sidebar-admin :: adminSidebar('vouchers')}"></div>
+
+    <div class="main-content">
+        <div class="page-title">Quản lý Voucher (Mã giảm giá)</div>
+
+        <div th:if="${successMsg}" class="alert alert-success alert-dismissible fade show shadow-sm">
+            <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${successMsg}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${errorMsg}" class="alert alert-danger alert-dismissible fade show shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${errorMsg}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <form th:action="@{/admin/vouchers}" method="GET" class="mb-4 bg-light p-3 rounded shadow-sm border">
+            <div class="row g-2 mb-3">
+                <div class="col-md-3">
+                    <input type="text" name="keyword" class="form-control" placeholder="Tìm mã Voucher..."
+                           th:value="${keyword}">
+                </div>
+                <div class="col-md-3">
+                    <select name="active" class="form-select">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option value="true" th:selected="${active == true}">Đang hoạt động</option>
+                        <option value="false" th:selected="${active == false}">Đã tắt</option>
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex gap-2 justify-content-end">
+                    <button type="submit" class="btn btn-pink px-4"><i class="bi bi-search"></i> Lọc</button>
+                    <a th:href="@{/admin/vouchers}" class="btn btn-secondary" title="Xóa bộ lọc"><i
+                            class="bi bi-arrow-clockwise"></i></a>
+                    <button type="button" class="btn btn-pink text-nowrap" data-bs-toggle="modal"
+                            data-bs-target="#voucherModal" onclick="clearModal()">
+                        + Thêm Mới
+                    </button>
+                </div>
+            </div>
+
+            <div class="row g-2 filter-group">
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Giảm %</span>
+                        <input type="number" name="minPct" class="form-control" placeholder="Từ" th:value="${minPct}">
+                        <input type="number" name="maxPct" class="form-control" placeholder="Đến" th:value="${maxPct}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Max VNĐ</span>
+                        <input type="number" name="minMaxAmt" class="form-control" placeholder="Từ"
+                               th:value="${minMaxAmt}">
+                        <input type="number" name="maxMaxAmt" class="form-control" placeholder="Đến"
+                               th:value="${maxMaxAmt}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Đơn TT</span>
+                        <input type="number" name="minOrderFrom" class="form-control" placeholder="Từ"
+                               th:value="${minOrderFrom}">
+                        <input type="number" name="minOrderTo" class="form-control" placeholder="Đến"
+                               th:value="${minOrderTo}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Hạn SD</span>
+                        <input type="date" name="expireFrom" class="form-control" th:value="${expireFrom}">
+                        <input type="date" name="expireTo" class="form-control" th:value="${expireTo}">
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-container">
+            <table class="table-custom">
+                <thead>
+                <tr>
+                    <th>Mã Voucher</th>
+                    <th>Mô tả chi tiết</th>
+                    <th>Giảm (%)</th>
+                    <th>Max Giảm (VNĐ)</th>
+                    <th>Đơn Tối Thiểu</th>
+                    <th>Hạn Sử Dụng</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-center">Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${voucherPage.content}">
+                    <td><span class="badge bg-dark fs-6" th:text="${v.code}">CODE</span></td>
+                    <td><span class="text-muted small" th:text="${v.description}"></span></td>
+                    <td class="fw-bold text-danger" th:text="${v.discountPercent} + '%'"></td>
+
+                    <td>
+                        <span th:if="${v.maxDiscount != null}"
+                              th:text="${#numbers.formatDecimal(v.maxDiscount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
+                        <span th:unless="${v.maxDiscount != null}"
+                              class="badge bg-success bg-opacity-75">Không giới hạn</span>
+                    </td>
+
+                    <td th:text="${#numbers.formatDecimal(v.minOrderValue, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                    <td th:text="${#temporals.format(v.expiryDate, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td>
+                        <span th:if="${v.active}" class="text-success fw-bold"><i
+                                class="bi bi-check-circle"></i> Bật</span>
+                        <span th:unless="${v.active}" class="text-danger fw-bold"><i
+                                class="bi bi-x-circle"></i> Tắt</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center align-items-center gap-3">
+                            <button class="btn btn-sm text-primary p-0" title="Chỉnh sửa"
+                                    data-bs-toggle="modal" data-bs-target="#voucherModal"
+                                    th:attr="data-id=${v.id}, data-code=${v.code}, data-desc=${v.description}, data-percent=${v.discountPercent}, data-max=${v.maxDiscount}, data-min=${v.minOrderValue}, data-expiry=${v.expiryDate}">
+                                <i class="bi bi-pencil-square" style="font-size: 1.1rem;"></i>
+                            </button>
+                            <a th:href="@{/admin/vouchers/toggle-status/{id}(id=${v.id})}" class="text-warning"
+                               title="Bật/Tắt">
+                                <i class="bi bi-arrow-repeat" style="font-size: 1.1rem;"></i>
+                            </a>
+                            <form th:action="@{/admin/vouchers/delete/{id}(id=${v.id})}" method="POST"
+                                  onsubmit="return confirm('Xác nhận xóa Voucher này?');" style="display:inline;">
+                                <button type="submit" class="btn btn-sm text-danger p-0" title="Xóa">
+                                    <i class="bi bi-trash" style="font-size: 1.1rem;"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${voucherPage.isEmpty()}">
+                    <td colspan="8" class="text-center text-muted py-4">Chưa có Voucher nào.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${voucherPage.totalPages > 1}" class="mt-4 d-flex justify-content-between align-items-center">
+                <div class="text-muted" style="font-size: 14px;">Trang <b th:text="${currentPage}"></b> / <b
+                        th:text="${voucherPage.totalPages}"></b></div>
+                <ul class="pagination mb-0 shadow-sm">
+                    <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                        <a class="page-link text-pink"
+                           th:href="@{/admin/vouchers(page=1, keyword=${keyword}, active=${active}, minPct=${minPct}, maxPct=${maxPct}, minMaxAmt=${minMaxAmt}, maxMaxAmt=${maxMaxAmt}, minOrderFrom=${minOrderFrom}, minOrderTo=${minOrderTo}, expireFrom=${expireFrom}, expireTo=${expireTo})}">&laquo;&laquo;</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                        <a class="page-link text-pink"
+                           th:href="@{/admin/vouchers(page=${currentPage - 1}, keyword=${keyword}, active=${active}, minPct=${minPct}, maxPct=${maxPct}, minMaxAmt=${minMaxAmt}, maxMaxAmt=${maxMaxAmt}, minOrderFrom=${minOrderFrom}, minOrderTo=${minOrderTo}, expireFrom=${expireFrom}, expireTo=${expireTo})}">Trước</a>
+                    </li>
+
+                    <li class="page-item" th:each="i : ${#numbers.sequence(1, voucherPage.totalPages)}"
+                        th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
+                        th:classappend="${currentPage == i} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/admin/vouchers(page=${i}, keyword=${keyword}, active=${active}, minPct=${minPct}, maxPct=${maxPct}, minMaxAmt=${minMaxAmt}, maxMaxAmt=${maxMaxAmt}, minOrderFrom=${minOrderFrom}, minOrderTo=${minOrderTo}, expireFrom=${expireFrom}, expireTo=${expireTo})}"
+                           th:text="${i}"></a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${currentPage == voucherPage.totalPages} ? 'disabled'">
+                        <a class="page-link text-pink"
+                           th:href="@{/admin/vouchers(page=${currentPage + 1}, keyword=${keyword}, active=${active}, minPct=${minPct}, maxPct=${maxPct}, minMaxAmt=${minMaxAmt}, maxMaxAmt=${maxMaxAmt}, minOrderFrom=${minOrderFrom}, minOrderTo=${minOrderTo}, expireFrom=${expireFrom}, expireTo=${expireTo})}">Sau</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == voucherPage.totalPages} ? 'disabled'">
+                        <a class="page-link text-pink"
+                           th:href="@{/admin/vouchers(page=${voucherPage.totalPages}, keyword=${keyword}, active=${active}, minPct=${minPct}, maxPct=${maxPct}, minMaxAmt=${minMaxAmt}, maxMaxAmt=${maxMaxAmt}, minOrderFrom=${minOrderFrom}, minOrderTo=${minOrderTo}, expireFrom=${expireFrom}, expireTo=${expireTo})}">&raquo;&raquo;</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="voucherModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/admin/vouchers/save}" method="POST" id="voucherForm">
+                <input type="hidden" name="id" id="vId">
+                <input type="hidden" name="active" id="vActive" value="true">
+
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Thêm Voucher Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Mã Voucher (Code) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control text-uppercase fw-bold" name="code" id="vCode" required
+                               placeholder="VD: TET2026">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả chi tiết <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="description" id="vDesc" rows="2" required
+                                  placeholder="VD: Giảm 50% tối đa 100k cho đơn từ 150k..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Giảm phần trăm (%) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="discountPercent" id="vPercent" required
+                                   min="1" max="100" placeholder="VD: 50">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Max Giảm (VNĐ)</label>
+                            <input type="number" class="form-control" name="maxDiscount" id="vMax" min="0"
+                                   placeholder="Để trống = Không giới hạn">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Áp dụng cho đơn tối thiểu (VNĐ)</label>
+                        <input type="number" class="form-control" name="minOrderValue" id="vMin" required min="0"
+                               placeholder="VD: 150000">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hạn sử dụng <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control" name="expiryDate" id="vExpiry" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-pink px-4">Lưu Voucher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function clearModal() {
+        document.getElementById('modalTitle').innerText = "Thêm Voucher Mới";
+        document.getElementById('vId').value = "";
+        document.getElementById('vCode').value = "";
+        document.getElementById('vDesc').value = "";
+        document.getElementById('vPercent').value = "";
+        document.getElementById('vMax').value = "";
+        document.getElementById('vMin').value = "0";
+        document.getElementById('vExpiry').value = "";
+    }
+
+    const voucherModal = document.getElementById('voucherModal');
+    if (voucherModal) {
+        voucherModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            if (id) {
+                document.getElementById('modalTitle').innerText = "Cập Nhật Voucher";
+                document.getElementById('vId').value = id;
+                document.getElementById('vCode').value = button.getAttribute('data-code');
+                document.getElementById('vDesc').value = button.getAttribute('data-desc');
+                document.getElementById('vPercent').value = button.getAttribute('data-percent');
+                let rawMax = button.getAttribute('data-max');
+                document.getElementById('vMax').value = (rawMax !== 'null' && rawMax !== '') ? rawMax : '';
+                document.getElementById('vMin').value = button.getAttribute('data-min');
+                let rawExpiry = button.getAttribute('data-expiry');
+                document.getElementById('vExpiry').value = rawExpiry ? rawExpiry.substring(0, 16) : "";
+            }
+        });
+    }
+</script>
+</body>
+</html>

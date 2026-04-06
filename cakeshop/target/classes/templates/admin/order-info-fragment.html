@@ -1,0 +1,62 @@
+<div th:fragment="infoContent">
+    <div class="row">
+        <div class="col-md-7 border-end">
+            <h6 class="fw-bold text-primary border-bottom pb-2">
+                <i class="fa-solid fa-truck-ramp-box me-2"></i>Thông tin nhận hàng
+            </h6>
+            <div class="card bg-light border-0 shadow-sm">
+                <div class="card-body">
+                    <p class="mb-2"><strong>Người nhận:</strong>
+                        <span class="text-dark fw-bold" th:text="${order.user != null ? order.user.name : 'Khách lẻ'}"></span>
+                    </p>
+                    <p class="mb-2"><strong>Số điện thoại:</strong>
+                        <span th:text="${order.user != null ? order.user.phone : 'N/A'}"></span>
+                    </p>
+                    <p class="mb-0 text-danger"><strong>Địa chỉ giao:</strong>
+                        <span class="fw-bold" th:text="${displayAddress}"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <h6 class="fw-bold text-primary border-bottom pb-2">
+                <i class="fa-solid fa-clipboard-check me-2"></i>Trạng thái & Xử lý
+            </h6>
+
+            <p class="mb-2"><strong>Trạng thái:</strong>
+                <span th:switch="${order.status}">
+                    <span th:case="'UNPAID'" class="badge bg-secondary">Chưa thanh toán</span>
+                    <span th:case="'PAID'" class="badge bg-info">Đã thanh toán</span>
+                    <span th:case="'assigned'" class="badge bg-primary">Đã phân Shipper</span>
+                    <span th:case="'SHIPPING'" class="badge bg-warning text-dark">Đang giao</span>
+                    <span th:case="'DELIVERED'" class="badge bg-info">Đã giao hàng</span>
+                    <span th:case="'COMPLETED'" class="badge bg-success">Hoàn thành</span>
+                    <span th:case="'CANCELLED'" class="badge bg-danger">Đã hủy</span>
+                    <span th:case="'FAILED'" class="badge bg-dark">Thất bại</span>
+                    <span th:case="*" class="badge bg-light text-dark" th:text="${order.status}"></span>
+                </span>
+            </p>
+
+            <p class="mb-2"><strong>Shipper:</strong>
+                <span class="text-primary fw-bold"
+                      th:text="${order.shipper != null ? order.shipper.name : 'Chưa có'}"></span>
+            </p>
+            <p class="mb-0"><strong>Thanh toán:</strong>
+                <span class="badge border text-dark" th:text="${order.payment}"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-3" th:if="${order.failureReason != null && !order.failureReason.isEmpty()}">
+        <div class="alert alert-warning mb-0 border-start border-4 border-warning">
+            <i class="fa-solid fa-comment-dots me-2"></i>
+            <strong>Ghi chú/Lý do:</strong> <span th:text="${order.failureReason}"></span>
+        </div>
+    </div>
+
+    <div class="mt-3 text-center" th:if="${order.deliveryImage != null}">
+        <h6 class="fw-bold text-start border-bottom pb-2">Ảnh xác nhận giao hàng:</h6>
+        <img th:src="${order.deliveryImage}" class="rounded shadow-sm mt-2" style="max-width: 100%; max-height: 200px; object-fit: contain;">
+    </div>
+</div>

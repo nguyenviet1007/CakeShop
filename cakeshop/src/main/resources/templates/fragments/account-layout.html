@@ -38,6 +38,11 @@
                        class="list-group-item list-group-item-action border-0 py-3">
                         <i class="fas fa-heart me-2 text-danger"></i> Yêu thích
                     </a>
+                    <a th:if="${session.user != null and !#strings.isEmpty(session.user.password)}"
+                       th:href="@{/change-password}"
+                       class="list-group-item list-group-item-action border-0 py-3">
+                        <i class="fas fa-key me-2 text-warning"></i> Đổi mật khẩu
+                    </a>
                 </div>
             </div>
             <div class="col-md-9">

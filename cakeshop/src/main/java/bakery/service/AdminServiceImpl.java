@@ -89,6 +89,10 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalArgumentException("Email này đã được sử dụng!");
         }
 
+        if (userRepository.existsByUsername(requestDto.getUsername())) {
+            throw new IllegalArgumentException("Username này đã được sử dụng!");
+        }
+
         User newUser = new User();
         newUser.setName(requestDto.getName());
         newUser.setEmail(requestDto.getEmail());

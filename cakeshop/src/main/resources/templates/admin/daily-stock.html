@@ -507,25 +507,25 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Đã lưu đồng bộ!',
-                    text: `Dữ liệu ngày ${date} đã được cập nhật thành công.`,
-                    confirmButtonColor: '#198754'
-                }).then(() => {
-                    location.reload(); // Reload trang để cập nhật số gốc mới
-                });
-            } else {
-                Swal.fire('Lỗi!', data.message || 'Có lỗi xảy ra', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Lỗi:', error);
-            Swal.fire('Lỗi kết nối!', 'Không thể liên lạc với máy chủ', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã lưu đồng bộ!',
+                        text: `Dữ liệu ngày ${date} đã được cập nhật thành công.`,
+                        confirmButtonColor: '#198754'
+                    }).then(() => {
+                        location.reload(); // Reload trang để cập nhật số gốc mới
+                    });
+                } else {
+                    Swal.fire('Lỗi!', data.message || 'Có lỗi xảy ra', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi:', error);
+                Swal.fire('Lỗi kết nối!', 'Không thể liên lạc với máy chủ', 'error');
+            });
     }
     function toggleProductVisibility(btn) {
         let productId = btn.getAttribute('data-id');
@@ -544,15 +544,15 @@
             if (result.isConfirmed) {
                 // Gọi API
                 fetch(`/manager/products/toggle-visibility/${productId}`, { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.status === 'success') {
-                        Swal.fire({toast: true, position: 'top-end', icon: 'success', title: data.message, showConfirmButton: false, timer: 2000});
-                        setTimeout(() => location.reload(), 1000); // Tải lại trang để update UI
-                    } else {
-                        Swal.fire('Lỗi!', data.message, 'error');
-                    }
-                });
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            Swal.fire({toast: true, position: 'top-end', icon: 'success', title: data.message, showConfirmButton: false, timer: 2000});
+                            setTimeout(() => location.reload(), 1000); // Tải lại trang để update UI
+                        } else {
+                            Swal.fire('Lỗi!', data.message, 'error');
+                        }
+                    });
             }
         });
     }
@@ -582,129 +582,129 @@
                 let percent = result.value;
                 // Gọi API truyền percent
                 fetch(`/manager/products/update-discount/${productId}?percent=${percent}`, { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.status === 'success') {
-                        Swal.fire({toast: true, position: 'top-end', icon: 'success', title: data.message, showConfirmButton: false, timer: 2000});
-                        setTimeout(() => location.reload(), 1000); // Tải lại trang để hiện dải băng Sale
-                    } else {
-                        Swal.fire('Lỗi!', data.message, 'error');
-                    }
-                });
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            Swal.fire({toast: true, position: 'top-end', icon: 'success', title: data.message, showConfirmButton: false, timer: 2000});
+                            setTimeout(() => location.reload(), 1000); // Tải lại trang để hiện dải băng Sale
+                        } else {
+                            Swal.fire('Lỗi!', data.message, 'error');
+                        }
+                    });
             }
         });
     }
-function filterDaily(element) {
-    // 1. Đổi trạng thái Active cho nút bấm (đã chạy tốt)
-    document.querySelectorAll('#categoryTabs .nav-link').forEach(btn => btn.classList.remove('active'));
-    element.classList.add('active');
+    function filterDaily(element) {
+        // 1. Đổi trạng thái Active cho nút bấm (đã chạy tốt)
+        document.querySelectorAll('#categoryTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
 
-    // 2. Lấy giá trị lọc từ thuộc tính data-category
-    const selectedCategory = element.getAttribute('data-category');
+        // 2. Lấy giá trị lọc từ thuộc tính data-category
+        const selectedCategory = element.getAttribute('data-category');
 
-    // 3. Thực hiện ẩn hiện các thẻ sản phẩm
-    const items = document.querySelectorAll('.filter-item');
+        // 3. Thực hiện ẩn hiện các thẻ sản phẩm
+        const items = document.querySelectorAll('.filter-item');
 
-    items.forEach(item => {
-        const itemCat = item.getAttribute('data-category');
+        items.forEach(item => {
+            const itemCat = item.getAttribute('data-category');
 
-        if (selectedCategory === 'all' || itemCat === selectedCategory) {
-            item.style.display = ""; // Hiện thẻ bánh phù hợp
-        } else {
-            item.style.display = "none"; // Ẩn thẻ bánh không phù hợp
+            if (selectedCategory === 'all' || itemCat === selectedCategory) {
+                item.style.display = ""; // Hiện thẻ bánh phù hợp
+            } else {
+                item.style.display = "none"; // Ẩn thẻ bánh không phù hợp
+            }
+        });
+    }
+    // Khai báo biến để kiểm tra modal đã mở chưa
+    let reportModalInstance = null;
+
+    function openReport() {
+        const modalElem = document.getElementById('dailyReportModal');
+
+        // Kiểm tra xem thư viện bootstrap đã sẵn sàng chưa
+        if (typeof bootstrap === 'undefined') {
+            alert("Lỗi: Thư viện Bootstrap chưa được tải! Vui lòng kiểm tra kết nối mạng.");
+            return;
         }
-    });
-}
-// Khai báo biến để kiểm tra modal đã mở chưa
-let reportModalInstance = null;
 
-function openReport() {
-    const modalElem = document.getElementById('dailyReportModal');
+        if (!reportModalInstance) {
+            reportModalInstance = new bootstrap.Modal(modalElem);
+        }
 
-    // Kiểm tra xem thư viện bootstrap đã sẵn sàng chưa
-    if (typeof bootstrap === 'undefined') {
-        alert("Lỗi: Thư viện Bootstrap chưa được tải! Vui lòng kiểm tra kết nối mạng.");
-        return;
+        reportModalInstance.show();
+        loadDailyReport(); // Tự động lấy dữ liệu ngay khi mở
     }
 
-    if (!reportModalInstance) {
-        reportModalInstance = new bootstrap.Modal(modalElem);
-    }
+    function loadDailyReport() {
+        const dateInput = document.getElementById('reportDate');
+        const container = document.getElementById('reportContentContainer');
 
-    reportModalInstance.show();
-    loadDailyReport(); // Tự động lấy dữ liệu ngay khi mở
-}
+        if (!dateInput || !container) return;
 
-function loadDailyReport() {
-    const dateInput = document.getElementById('reportDate');
-    const container = document.getElementById('reportContentContainer');
-
-    if (!dateInput || !container) return;
-
-    const date = dateInput.value;
-    container.innerHTML = `
+        const date = dateInput.value;
+        container.innerHTML = `
         <div class="text-center py-5">
             <div class="spinner-border text-primary" role="status"></div>
             <p class="mt-2 text-muted">Đang tải báo cáo ngày ${date}...</p>
         </div>`;
 
-    // Gọi API lấy Fragment
-    fetch(`/manager/daily-stock/daily-report-view?date=${date}`)
-        .then(res => {
-            if (!res.ok) throw new Error("Lỗi Server");
-            return res.text();
-        })
-        .then(html => {
-            container.innerHTML = html;
-        })
-        .catch(err => {
-            container.innerHTML = `
+        // Gọi API lấy Fragment
+        fetch(`/manager/daily-stock/daily-report-view?date=${date}`)
+            .then(res => {
+                if (!res.ok) throw new Error("Lỗi Server");
+                return res.text();
+            })
+            .then(html => {
+                container.innerHTML = html;
+            })
+            .catch(err => {
+                container.innerHTML = `
                 <div class="alert alert-warning text-center">
                     <i class="fa-solid fa-circle-exclamation me-2"></i>
                     Chưa có dữ liệu chốt kho cho ngày <b>${date}</b>.
                 </div>`;
-        });
-}
-    let currentAdjustStockId = null;
-let adjustModalInstance = null;
-function prepareAdjustModal(btn) {
-    // Lấy dữ liệu từ thuộc tính data của nút bấm
-    const id = btn.getAttribute('data-id');
-    const name = btn.getAttribute('data-name');
-    const qty = btn.getAttribute('data-qty');
-
-    // Gọi lại hàm openAdjustModal cũ của bạn
-    openAdjustModal(id, name, qty);
-}
-function openAdjustModal(id, name, currentQty) {
-    currentAdjustStockId = id;
-    document.getElementById('adjustProductName').innerText = "Sản phẩm: " + name + " (Hiện có: " + currentQty + ")";
-    if (!adjustModalInstance) {
-        adjustModalInstance = new bootstrap.Modal(document.getElementById('adjustStockModal'));
+            });
     }
-    adjustModalInstance.show();
-}
+    let currentAdjustStockId = null;
+    let adjustModalInstance = null;
+    function prepareAdjustModal(btn) {
+        // Lấy dữ liệu từ thuộc tính data của nút bấm
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const qty = btn.getAttribute('data-qty');
 
-function submitAdjustment() {
-    const type = document.getElementById('adjustType').value;
-    const amountVal = document.getElementById('adjustAmount').value;
-    const reason = document.getElementById('adjustReason').value;
-
-    // Nếu là 'minus' thì đổi dấu thành âm
-    const finalAmount = (type === 'plus') ? parseInt(amountVal) : -parseInt(amountVal);
-
-    fetch(`/manager/daily-stock/adjust-stock?stockId=${currentAdjustStockId}&amount=${finalAmount}&reason=${reason}`, {
-        method: 'POST'
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.status === 'success') {
-            Swal.fire('Thành công', data.message, 'success').then(() => location.reload());
-        } else {
-            Swal.fire('Lỗi', data.message, 'error');
+        // Gọi lại hàm openAdjustModal cũ của bạn
+        openAdjustModal(id, name, qty);
+    }
+    function openAdjustModal(id, name, currentQty) {
+        currentAdjustStockId = id;
+        document.getElementById('adjustProductName').innerText = "Sản phẩm: " + name + " (Hiện có: " + currentQty + ")";
+        if (!adjustModalInstance) {
+            adjustModalInstance = new bootstrap.Modal(document.getElementById('adjustStockModal'));
         }
-    });
-}
+        adjustModalInstance.show();
+    }
+
+    function submitAdjustment() {
+        const type = document.getElementById('adjustType').value;
+        const amountVal = document.getElementById('adjustAmount').value;
+        const reason = document.getElementById('adjustReason').value;
+
+        // Nếu là 'minus' thì đổi dấu thành âm
+        const finalAmount = (type === 'plus') ? parseInt(amountVal) : -parseInt(amountVal);
+
+        fetch(`/manager/daily-stock/adjust-stock?stockId=${currentAdjustStockId}&amount=${finalAmount}&reason=${reason}`, {
+            method: 'POST'
+        })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    Swal.fire('Thành công', data.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Lỗi', data.message, 'error');
+                }
+            });
+    }
 </script>
 </body>
 </html>

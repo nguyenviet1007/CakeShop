@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Profile</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+        body{background:linear-gradient(135deg,#eef2ff,#f8fafc);}
+
+        .container{
+            width:420px;
+            margin:70px auto;
+            background:white;
+            padding:35px 30px;
+            border-radius:18px;
+            box-shadow:0 15px 35px rgba(0,0,0,0.08);
+            transition:0.3s;
+        }
+        .container:hover{transform:translateY(-4px);}
+
+        h2{
+            text-align:center;
+            margin-bottom:20px;
+            color:#111827;
+        }
+
+        .error-box{
+            background:#fee2e2;
+            color:#dc2626;
+            padding:10px;
+            border-radius:8px;
+            margin-bottom:15px;
+            font-size:14px;
+            text-align:center;
+        }
+
+        label{
+            font-size:14px;
+            color:#6b7280;
+            font-weight:500;
+        }
+
+        input{
+            width:100%;
+            padding:12px;
+            margin:8px 0 16px 0;
+            border-radius:10px;
+            border:1px solid #e5e7eb;
+            outline:none;
+            transition:0.3s;
+        }
+
+        input:focus{
+            border-color:#6366f1;
+            box-shadow:0 0 0 2px rgba(99,102,241,0.2);
+        }
+
+        .input-error{
+            border-color:#dc2626 !important;
+            box-shadow:0 0 0 2px rgba(220,38,38,0.2);
+        }
+
+        button{
+            width:100%;
+            padding:12px;
+            border-radius:10px;
+            border:none;
+            background:linear-gradient(135deg,#4f46e5,#6366f1);
+            color:white;
+            font-weight:500;
+            cursor:pointer;
+            transition:0.3s;
+        }
+
+        button:hover{opacity:0.9;}
+
+        .back{
+            display:block;
+            text-align:center;
+            margin-top:18px;
+            text-decoration:none;
+            color:#6b7280;
+            font-size:14px;
+        }
+
+        .back:hover{color:#4f46e5;}
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>✏️ Cập nhật thông tin</h2>
+
+    <!-- ERROR FROM BACKEND -->
+    <div th:if="${param.error}" class="error-box">
+        ❌ Email đã tồn tại
+    </div>
+
+    <form th:action="@{/shipper/edit}" method="post" onsubmit="return validateForm()">
+
+        <label>Tên</label>
+        <input type="text"
+               id="name"
+               name="name"
+               th:value="${shipper.name}"
+               required>
+
+        <label>Email</label>
+        <input type="email"
+               id="email"
+               name="email"
+               th:value="${shipper.email}"
+               th:classappend="${param.error} ? 'input-error' : ''"
+               required>
+
+        <label>Số điện thoại</label>
+        <input type="text"
+               id="phone"
+               name="phone"
+               th:value="${shipper.phone}" required>
+
+        <label>Địa chỉ</label>
+        <input type="text"
+               id="address"
+               name="address"
+               th:value="${shipper.address}" required>
+
+        <button type="submit">💾 Lưu thay đổi</button>
+
+    </form>
+
+    <a th:href="@{/shipper/profile}" class="back">⬅ Quay lại Profile</a>
+
+</div>
+
+<!-- 🔥 SCRIPT VALIDATE -->
+<script>
+    function validateForm() {
+        const name = document.getElementById("name");
+        const email = document.getElementById("email");
+        const phone = document.getElementById("phone");
+
+        // reset lỗi
+        name.classList.remove("input-error");
+        email.classList.remove("input-error");
+        phone.classList.remove("input-error");
+
+        // ===== NAME =====
+        if (name.value.trim().length < 3) {
+            alert("❌ Tên phải >= 3 ký tự");
+            name.classList.add("input-error");
+            return false;
+        }
+
+        // ===== EMAIL =====
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.value)) {
+            alert("❌ Email không hợp lệ");
+            email.classList.add("input-error");
+            return false;
+        }
+
+        // ===== PHONE =====
+        if (phone.value.trim() !== "") {
+            const phoneRegex = /^[0-9]{9,11}$/;
+
+            if (!phoneRegex.test(phone.value)) {
+                alert("❌ SĐT phải từ 9-11 số");
+                phone.classList.add("input-error");
+                return false;
+            }
+        }
+
+        return true;
+    }
+</script>
+
+</body>
+</html>

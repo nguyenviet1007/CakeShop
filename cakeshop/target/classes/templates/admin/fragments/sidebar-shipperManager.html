@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<div th:fragment="shipperSidebar(activePage)" class="sidebar">
+    <div class="sidebar-title">Bakery Manager</div>
+
+    <a th:href="@{/admin/shippers}"
+       th:classappend="${activePage == 'shipper'} ? 'active' : ''">
+        Shipper
+    </a>
+
+    <a th:href="@{/logout}" class="logout-btn mt-auto">
+        Đăng xuất
+    </a>
+</div>
+
+</body>
+</html>

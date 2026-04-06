@@ -41,7 +41,7 @@
 
 <div class="glass-toolbar d-flex justify-content-between align-items-center shadow-sm">
     <div class="d-flex align-items-center">
-        <a href="/manager/products" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
+        <a href="/admin/dashboard" class="btn-back" title="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
         <h4 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-clipboard-list text-info me-2"></i>Quản Lý Đơn Hàng</h4>
     </div>
 </div>
@@ -260,61 +260,61 @@
 
     // Xử lý click Tab trạng thái
     function updateStatusAndFilter() {
-    // Cập nhật biến global currentStatus từ giá trị của select
-    currentStatus = document.getElementById('statusFilter').value;
+        // Cập nhật biến global currentStatus từ giá trị của select
+        currentStatus = document.getElementById('statusFilter').value;
 
-    // Gọi hàm lọc đã sửa ở bước trước (hàm dùng startDate/endDate)
-    getRevenueStats(0);
-}
+        // Gọi hàm lọc đã sửa ở bước trước (hàm dùng startDate/endDate)
+        getRevenueStats(0);
+    }
 
     // Hàm Lọc Tổng Hợp (Gộp Ngày, Phương thức, Kênh, Tìm kiếm, Trạng thái)
     // Thêm tham số page mặc định là 0
     // 1. Thêm tham số pageNumber
     // Cập nhật hàm lọc tổng hợp
-function getRevenueStats(pageNumber = 0) {
-    // Lấy giá trị từ 2 ô ngày mới
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
+    function getRevenueStats(pageNumber = 0) {
+        // Lấy giá trị từ 2 ô ngày mới
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
 
-    const method = document.getElementById('statsMethod').value;
-    const channel = document.getElementById('statsChannel').value;
-    const search = document.getElementById('searchFilter').value;
+        const method = document.getElementById('statsMethod').value;
+        const channel = document.getElementById('statsChannel').value;
+        const search = document.getElementById('searchFilter').value;
 
-    const wrapper = document.getElementById('tableWrapper');
-    wrapper.style.opacity = '0.5';
+        const wrapper = document.getElementById('tableWrapper');
+        wrapper.style.opacity = '0.5';
 
-    // Cập nhật URL: thay date bằng startDate và endDate
-    let url = `/manager/orders/statistics?startDate=${startDate}&endDate=${endDate}&method=${method}&channel=${channel}&search=${search}&status=${currentStatus}&page=${pageNumber}`;
+        // Cập nhật URL: thay date bằng startDate và endDate
+        let url = `/manager/orders/statistics?startDate=${startDate}&endDate=${endDate}&method=${method}&channel=${channel}&search=${search}&status=${currentStatus}&page=${pageNumber}`;
 
-    fetch(url)
-        .then(res => res.text())
-        .then(html => {
-            wrapper.innerHTML = html;
-            wrapper.style.opacity = '1';
+        fetch(url)
+            .then(res => res.text())
+            .then(html => {
+                wrapper.innerHTML = html;
+                wrapper.style.opacity = '1';
 
-            // Cập nhật số liệu Header (giữ nguyên logic cũ của bạn)
-            const totalVal = document.getElementById('hiddenTotal').value || 0;
-            const countVal = document.getElementById('hiddenCount').value || 0;
+                // Cập nhật số liệu Header (giữ nguyên logic cũ của bạn)
+                const totalVal = document.getElementById('hiddenTotal').value || 0;
+                const countVal = document.getElementById('hiddenCount').value || 0;
 
-            document.getElementById('resTotal').innerText = new Intl.NumberFormat('vi-VN', {
-                style: 'currency', currency: 'VND'
-            }).format(totalVal);
-            document.getElementById('resCount').innerText = countVal;
+                document.getElementById('resTotal').innerText = new Intl.NumberFormat('vi-VN', {
+                    style: 'currency', currency: 'VND'
+                }).format(totalVal);
+                document.getElementById('resCount').innerText = countVal;
 
-            overridePagination();
-        })
-        .catch(err => {
-            console.error("Lỗi tải dữ liệu:", err);
-            wrapper.style.opacity = '1';
-        });
-}
+                overridePagination();
+            })
+            .catch(err => {
+                console.error("Lỗi tải dữ liệu:", err);
+                wrapper.style.opacity = '1';
+            });
+    }
 
-// Thêm hàm reset ngày nếu cần
-function resetDate() {
-    document.getElementById('startDate').value = '';
-    document.getElementById('endDate').value = '';
-    getRevenueStats();
-}
+    // Thêm hàm reset ngày nếu cần
+    function resetDate() {
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        getRevenueStats();
+    }
 
     // 2. Hàm ghi đè các nút phân trang của Fragment dùng chung
     function overridePagination() {

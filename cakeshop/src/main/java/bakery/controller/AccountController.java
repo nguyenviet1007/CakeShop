@@ -10,12 +10,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,21 +31,18 @@ public class AccountController {
 
     @Autowired private OrderDetailRepository orderDetailRepository;
 
-
     @Autowired private FavoriteRepository favoriteRepository;
 
     @Autowired private ProductRepository productRepository;
 
+    @Autowired private PasswordEncoder passwordEncoder;
+
     @GetMapping("/profile")
     public String profile(HttpSession session, Model model){
-
         User user = (User) session.getAttribute("user");
-
         model.addAttribute("customer", user);
-
         return "profile";
     }
-
     @GetMapping("/orders")
     public String orders(@RequestParam(required = false) String status,
                          @RequestParam(defaultValue = "0") int page, // Trang hiện tại (mặc định là 0)
@@ -204,6 +203,63 @@ public class AccountController {
         }
 
         return ResponseEntity.status(404).body("Sản phẩm không có trong danh sách yêu thích");
+    }
+    @GetMapping("/change-password")
+    public String changePasswordPage(Principal principal) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+
+        return "change_password";
+    }
+
+    @PostMapping("/change-password/update")
+    public String changePassword(
+            Principal principal,
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword, // Thêm tham số này để khớp với form
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        if (principal == null) {
+            return "redirect:/login";
+        }
+
+        String username = principal.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 1. Kiểm tra mật khẩu cũ
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            model.addAttribute("message", "Mật khẩu cũ không chính xác!");
+            model.addAttribute("messageType", "danger");
+            return "change_password";
+        }
+
+        // 2. Kiểm tra mật khẩu mới trùng khớp (Backend check)
+        if (!newPassword.equals(confirmPassword)) {
+            model.addAttribute("message", "Mật khẩu xác nhận không khớp!");
+            model.addAttribute("messageType", "danger");
+            return "change_password";
+        }
+
+        // 3. Kiểm tra độ dài mật khẩu
+        if (newPassword.length() < 6) {
+            model.addAttribute("message", "Mật khẩu mới phải có ít nhất 6 ký tự!");
+            model.addAttribute("messageType", "danger");
+            return "change_password";
+        }
+
+        // 4. Lưu mật khẩu mới
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Thông báo thành công và điều hướng (Có thể logout hoặc giữ lại tùy bạn)
+        redirectAttributes.addFlashAttribute("message", "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
+        redirectAttributes.addFlashAttribute("messageType", "success");
+
+        return "redirect:/login"; // Hoặc "redirect:/do-logout" nếu bạn muốn bắt đăng nhập lại ngay
     }
 }
 

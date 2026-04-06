@@ -223,24 +223,24 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         })
-        .then(res => res.json())
-        .then(result => {
-            if (result.status === 'success') {
-                Swal.fire({
-                    title: 'Đã xuất kho!',
-                    text: 'Kho đã được cập nhật.',
-                    icon: 'success',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => window.location.href = '/manager/ingredients');
-            } else {
-                Swal.fire('Lỗi Server', result.message, 'error');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            Swal.fire('Lỗi', 'Không thể kết nối đến server', 'error');
-        });
+            .then(res => res.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    Swal.fire({
+                        title: 'Đã xuất kho!',
+                        text: 'Kho đã được cập nhật.',
+                        icon: 'success',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => window.location.href = '/manager/ingredients');
+                } else {
+                    Swal.fire('Lỗi Server', result.message, 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Lỗi', 'Không thể kết nối đến server', 'error');
+            });
     }
 </script>
 </body>

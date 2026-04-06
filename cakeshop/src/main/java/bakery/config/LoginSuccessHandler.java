@@ -51,12 +51,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             System.out.println("ROLE: " + role);
 
             // Nếu là Admin -> vào trang quản trị
-            if (role.equals("ROLE_ADMIN")) {
+            if (role.equals("ROLE_ADMIN") || role.equals("ROLE_MANAGER")) {
                 response.sendRedirect("/admin/dashboard");
-                return;
-            }
-            if (role.equals("ROLE_MANAGER")) {
-                response.sendRedirect("/manager/products");
                 return;
             }
 

@@ -224,7 +224,7 @@
                     <div class="row">
                         <div th:each="image, iter : ${product.images}" class="col-md-4 mb-3">
                             <div class="card border-0 shadow-sm">
-                                <img th:src="${image.imageUrl}" class="card-img-top" style="height: 150px; object-fit: cover; border-radius: 8px;">
+                                <img th:src="@{'/uploads/' + ${image.imageUrl}}" class="card-img-top" style="height: 150px; object-fit: cover; border-radius: 8px;">
                                 <div class="card-body p-2 text-center">
                                     <div class="form-check">
                                         <input type="radio" th:name="mainImageId" th:value="${image.imageId}" th:checked="${image.isMain}" class="form-check-input">
@@ -305,70 +305,70 @@
 
     // LOGIC GOM DỮ LIỆU
     // LOGIC GOM DỮ LIỆU
-function gomDuLieuNguyenLieu() {
-    let danhSachRecipe = [];
-    let rows = document.querySelectorAll('.recipe-row');
-    let seenIngredients = new Set();
+    function gomDuLieuNguyenLieu() {
+        let danhSachRecipe = [];
+        let rows = document.querySelectorAll('.recipe-row');
+        let seenIngredients = new Set();
 
-    for (let i = 0; i < rows.length; i++) {
-        let row = rows[i];
-        let selectElem = row.querySelector('select');
-        let amountElem = row.querySelector('input[type="number"]');
+        for (let i = 0; i < rows.length; i++) {
+            let row = rows[i];
+            let selectElem = row.querySelector('select');
+            let amountElem = row.querySelector('input[type="number"]');
 
-        if (selectElem && amountElem) {
-            let ingId = selectElem.value;
-            let amt = amountElem.value;
+            if (selectElem && amountElem) {
+                let ingId = selectElem.value;
+                let amt = amountElem.value;
 
-            if (ingId && amt) {
-                // --- VALIDATE FRONTEND BẰNG SWEETALERT2 ---
+                if (ingId && amt) {
+                    // --- VALIDATE FRONTEND BẰNG SWEETALERT2 ---
 
-                // 1. Kiểm tra > 0
-                if (parseFloat(amt) <= 0) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Định lượng không hợp lệ',
-                        text: 'Vui lòng nhập số lượng nguyên liệu lớn hơn 0 nhé!',
-                        confirmButtonText: 'Đã hiểu',
-                        confirmButtonColor: '#f39c12' // Màu cam warning
-                    }).then(() => {
-                        amountElem.focus(); // Đợi người dùng tắt popup rồi mới focus
+                    // 1. Kiểm tra > 0
+                    if (parseFloat(amt) <= 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Định lượng không hợp lệ',
+                            text: 'Vui lòng nhập số lượng nguyên liệu lớn hơn 0 nhé!',
+                            confirmButtonText: 'Đã hiểu',
+                            confirmButtonColor: '#f39c12' // Màu cam warning
+                        }).then(() => {
+                            amountElem.focus(); // Đợi người dùng tắt popup rồi mới focus
+                        });
+                        return false; // Chặn submit
+                    }
+
+                    // 2. Kiểm tra trùng
+                    if (seenIngredients.has(ingId)) {
+                        // Lấy tên nguyên liệu bị trùng để báo lỗi cho trực quan
+                        let ingName = selectElem.options[selectElem.selectedIndex].text;
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Trùng lặp nguyên liệu',
+                            html: `Bạn đã chọn <b>${ingName}</b> nhiều lần.<br>Vui lòng gộp số lượng lại thành 1 dòng nhé!`,
+                            confirmButtonText: 'Sửa ngay',
+                            confirmButtonColor: '#dc3545' // Màu đỏ danger
+                        }).then(() => {
+                            selectElem.focus();
+                        });
+                        return false; // Chặn submit
+                    }
+                    seenIngredients.add(ingId);
+                    // ------------------------------------------
+
+                    danhSachRecipe.push({
+                        ingredient: { ingredientId: parseInt(ingId) },
+                        amount: parseFloat(amt)
                     });
-                    return false; // Chặn submit
                 }
 
-                // 2. Kiểm tra trùng
-                if (seenIngredients.has(ingId)) {
-                    // Lấy tên nguyên liệu bị trùng để báo lỗi cho trực quan
-                    let ingName = selectElem.options[selectElem.selectedIndex].text;
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Trùng lặp nguyên liệu',
-                        html: `Bạn đã chọn <b>${ingName}</b> nhiều lần.<br>Vui lòng gộp số lượng lại thành 1 dòng nhé!`,
-                        confirmButtonText: 'Sửa ngay',
-                        confirmButtonColor: '#dc3545' // Màu đỏ danger
-                    }).then(() => {
-                        selectElem.focus();
-                    });
-                    return false; // Chặn submit
-                }
-                seenIngredients.add(ingId);
-                // ------------------------------------------
-
-                danhSachRecipe.push({
-                    ingredient: { ingredientId: parseInt(ingId) },
-                    amount: parseFloat(amt)
-                });
+                selectElem.removeAttribute('name');
+                amountElem.removeAttribute('name');
             }
-
-            selectElem.removeAttribute('name');
-            amountElem.removeAttribute('name');
         }
-    }
 
-    document.getElementById('recipesJson').value = JSON.stringify(danhSachRecipe);
-    return true;
-}
+        document.getElementById('recipesJson').value = JSON.stringify(danhSachRecipe);
+        return true;
+    }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

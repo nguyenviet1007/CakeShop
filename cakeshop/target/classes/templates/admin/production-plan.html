@@ -324,22 +324,22 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(exportList)
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.status === 'success') {
-                        Swal.fire('Thành công!', 'Đã xuất kho và lưu lịch sử.', 'success')
-                        .then(() => {
-                            // Xong thì đưa người dùng về trang Danh sách Nguyên liệu
-                            window.location.href = '/manager/ingredients';
-                        });
-                    } else {
-                        Swal.fire('Lỗi!', data.message || 'Có lỗi xảy ra', 'error');
-                    }
-                })
-                .catch(error => {
-                    Swal.fire('Lỗi kết nối!', 'Không thể gọi API Xuất kho', 'error');
-                    console.error('Error:', error);
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            Swal.fire('Thành công!', 'Đã xuất kho và lưu lịch sử.', 'success')
+                                .then(() => {
+                                    // Xong thì đưa người dùng về trang Danh sách Nguyên liệu
+                                    window.location.href = '/manager/ingredients';
+                                });
+                        } else {
+                            Swal.fire('Lỗi!', data.message || 'Có lỗi xảy ra', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Lỗi kết nối!', 'Không thể gọi API Xuất kho', 'error');
+                        console.error('Error:', error);
+                    });
             }
         });
     });
