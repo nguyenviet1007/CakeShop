@@ -89,7 +89,7 @@ public class AdShipper {
     @PostMapping("/save")
     public String saveShipper(@ModelAttribute User user, Model model){
 
-        // 👉 kiểm tra username trùng (nên có)
+        //  kiểm tra username trùng
         if (userRepository.existsByUsername(user.getUsername())) {
             model.addAttribute("errorUsername", "Username đã tồn tại");
             model.addAttribute("user", user); // giữ lại dữ liệu đã nhập
@@ -102,16 +102,16 @@ public class AdShipper {
             throw new RuntimeException("Role SHIPPER not found in database");
         }
 
-        // 👉 mã hóa mật khẩu
+        //  mã hóa mật khẩu
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // 👉 gán role
+        //  gán role
         user.setRoles(Set.of(shipperRole));
 
-        // 👉 đảm bảo active
+        //  đảm bảo active
         user.setActive(true);
 
-        // 👉 lưu
+        //  lưu
         userRepository.save(user);
 
         return "redirect:/admin/shippers?success";
@@ -127,11 +127,11 @@ public class AdShipper {
         boolean hasOrders = orderRepository.existsByShipper(user);
 
         if (hasOrders) {
-            // 👉 đã có đơn → disable
+            //  đã có đơn → disable
             user.setActive(false);
             userRepository.save(user);
         } else {
-            // 👉 chưa có đơn → xóa
+            //  chưa có đơn → xóa
             userRepository.delete(user);
         }
 
@@ -156,7 +156,7 @@ public class AdShipper {
     public String saveFee(@RequestParam double deliveredFee,
                           @RequestParam double failedFee) {
 
-        // 🔥 lấy fee hiện tại
+        //  lấy fee hiện tại
         ShippingFee fee = feeRepository.findTopByOrderByIdDesc();
 
         if (fee == null) {

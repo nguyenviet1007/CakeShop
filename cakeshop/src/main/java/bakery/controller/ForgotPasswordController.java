@@ -90,14 +90,14 @@ public class ForgotPasswordController {
             return "redirect:/login?error";
         }
 
-        // ✅ check confirm password
+        //  check confirm password
         if (!password.equals(confirmPassword)) {
             model.addAttribute("error", "❌ Mật khẩu không trùng");
             model.addAttribute("token", token);
             return "reset-password";
         }
 
-        // ✅ check độ dài
+        //  check độ dài
         if (password.length() < 6) {
             model.addAttribute("error", "❌ Mật khẩu phải >= 6 ký tự");
             model.addAttribute("token", token);
@@ -106,12 +106,12 @@ public class ForgotPasswordController {
 
         User user = t.getUser();
 
-        // ✅ encode password
+        //  encode password
         user.setPassword(passwordEncoder.encode(password));
 
         userRepository.save(user);
 
-        // ✅ xoá token sau khi dùng
+        //  xoá token sau khi dùng
         tokenRepository.delete(t);
 
         return "redirect:/login?success";

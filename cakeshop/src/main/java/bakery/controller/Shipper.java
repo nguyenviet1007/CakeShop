@@ -46,7 +46,7 @@ public class Shipper {
             @RequestParam(defaultValue = "0") int pageAssigned,
             @RequestParam(defaultValue = "0") int pageShipping,
 
-            @RequestParam(defaultValue = "5") int size, // 👈 mặc định 5
+            @RequestParam(defaultValue = "5") int size, // mặc định 5
 
             @RequestParam(defaultValue = "") String keywordAssigned,
             @RequestParam(defaultValue = "") String keywordShipping
