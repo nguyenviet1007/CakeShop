@@ -43,6 +43,11 @@
         Kho nguyên liệu
     </a>
 
+    <a th:href="@{/admin/shippers}"
+       th:classappend="${activePage == 'shipper'} ? 'active' : ''">
+        Shipper
+    </a>
+
     <a th:href="@{/logout}" class="logout-btn mt-auto">
         Đăng xuất
     </a>
