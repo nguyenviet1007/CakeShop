@@ -54,14 +54,14 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // ✅ FIX LOGIN Ở ĐÂY
+
                 .formLogin(form -> form
                         .loginPage("/login")
 
-                        // 👉 QUAN TRỌNG: ép luôn về "/" sau login
+                        // ép luôn về "/" sau login
                         .defaultSuccessUrl("/", true)
 
-                        // 👉 vẫn giữ handler để phân role
+                        // vẫn giữ handler để phân role
                         .successHandler(loginSuccessHandler)
 
                         .failureHandler((request, response, exception) -> {

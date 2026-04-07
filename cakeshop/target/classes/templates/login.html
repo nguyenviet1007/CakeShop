@@ -179,18 +179,23 @@
     ✅ Đổi mật khẩu thành công! Hãy đăng nhập lại.
 </div>
 
-<!-- ERROR -->
-<div th:if="${param.error}" class="server-message server-error">
-    Username hoặc password không đúng
-</div>
+
 
 <!-- TOKEN INVALID -->
 <div th:if="${param.invalid}" class="server-message server-error">
     ⚠️ Link không hợp lệ hoặc đã hết hạn!
 </div>
 
-<div th:if="${param.disabled}" class="alert alert-warning">
-    🔒 Tài khoản của bạn đã bị khóa!
+<div th:if="${param.error}" class="server-message server-error">
+
+    <span th:if="${param.error[0] == 'disabled'}">
+        🔒 Tài khoản của bạn đã bị khóa!
+    </span>
+
+    <span th:if="${param.error[0] != 'disabled'}">
+        Username hoặc password không đúng
+    </span>
+
 </div>
 <div class="login-container">
 
