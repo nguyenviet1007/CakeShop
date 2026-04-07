@@ -422,7 +422,7 @@ public class Shipper {
         User shipper = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Shipper not found"));
 
-        List<Order> orders = orderRepository.findByShipperAndStatusIn(shipper, List.of("DELIVERED", "FAILED"));
+        List<Order> orders = orderRepository.findByShipperAndStatusIn(shipper, List.of("DELIVERED", "FAILED" ,"COMPLETED"));
 
         List<Order> filteredOrders = orders.stream()
                 .filter(o -> {
@@ -435,7 +435,7 @@ public class Shipper {
         // Tính tổng lương dựa trên phí lưu trong từng Order
         double totalSalary = 0;
         for (Order o : filteredOrders) {
-            if ("DELIVERED".equals(o.getStatus())) {
+            if ("DELIVERED".equals(o.getStatus()) || "COMPLETED".equals(o.getStatus()) ) {
                 totalSalary += (o.getDeliveredFee() != null ? o.getDeliveredFee() : 0);
             } else if ("FAILED".equals(o.getStatus())) {
                 totalSalary += (o.getFailedFee() != null ? o.getFailedFee() : 0);

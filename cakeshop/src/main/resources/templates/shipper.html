@@ -56,6 +56,11 @@
             border-bottom:1px solid #eee;
         }
 
+        .money{
+            font-weight:600;
+            color:#16a34a;
+        }
+
         .btn{
             padding:6px 12px;
             background:#4f46e5;
@@ -114,17 +119,13 @@
 
     <div class="card">
 
-        <!-- FILTER -->
         <form method="get" th:action="@{/shipper}" class="filter-box">
-            <input type="text"
-                   name="keywordAssigned"
+            <input type="text" name="keywordAssigned"
                    th:value="${keywordAssigned}"
                    placeholder="🔍 Tìm đơn...">
-
             <button type="submit">Tìm</button>
         </form>
 
-        <!-- TABLE -->
         <table>
             <tr>
                 <th>ID</th>
@@ -138,7 +139,14 @@
                 <td th:text="${o.id}"></td>
                 <td th:text="${o.user.name}"></td>
                 <td th:text="${o.deliveryAddress}"></td>
-                <td th:text="${o.totalAmount}"></td>
+
+                <!-- 💰 FORMAT TIỀN -->
+                <td>
+                    <span class="money"
+                          th:text="${#numbers.formatDecimal((o.totalAmount ?: 0), 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                    </span>
+                </td>
+
                 <td>
                     <a class="btn"
                        th:href="@{/shipper/order/{id}(id=${o.id})}">
@@ -148,9 +156,7 @@
             </tr>
         </table>
 
-        <!-- PAGINATION -->
         <div class="pagination">
-
             <a class="page-link"
                th:if="${assignedPage.number > 0}"
                th:href="@{/shipper(pageAssigned=${assignedPage.number - 1}, keywordAssigned=${keywordAssigned})}">
@@ -170,7 +176,6 @@
                th:href="@{/shipper(pageAssigned=${assignedPage.number + 1}, keywordAssigned=${keywordAssigned})}">
                 Next
             </a>
-
         </div>
 
     </div>
@@ -181,17 +186,13 @@
 
     <div class="card">
 
-        <!-- FILTER -->
         <form method="get" th:action="@{/shipper}" class="filter-box">
-            <input type="text"
-                   name="keywordShipping"
+            <input type="text" name="keywordShipping"
                    th:value="${keywordShipping}"
                    placeholder="🔍 Tìm đơn đang giao...">
-
             <button type="submit">Tìm</button>
         </form>
 
-        <!-- TABLE -->
         <table>
             <tr>
                 <th>ID</th>
@@ -205,7 +206,14 @@
                 <td th:text="${o.id}"></td>
                 <td th:text="${o.user.name}"></td>
                 <td th:text="${o.deliveryAddress}"></td>
-                <td th:text="${o.totalAmount}"></td>
+
+                <!-- 💰 FORMAT TIỀN -->
+                <td>
+                    <span class="money"
+                          th:text="${#numbers.formatDecimal((o.totalAmount ?: 0), 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                    </span>
+                </td>
+
                 <td>
                     <a class="btn"
                        th:href="@{/shipper/order/{id}(id=${o.id})}">
@@ -215,9 +223,7 @@
             </tr>
         </table>
 
-        <!-- PAGINATION -->
         <div class="pagination">
-
             <a class="page-link"
                th:if="${shippingPage.number > 0}"
                th:href="@{/shipper(pageShipping=${shippingPage.number - 1}, keywordShipping=${keywordShipping})}">
@@ -237,7 +243,6 @@
                th:href="@{/shipper(pageShipping=${shippingPage.number + 1}, keywordShipping=${keywordShipping})}">
                 Next
             </a>
-
         </div>
 
     </div>

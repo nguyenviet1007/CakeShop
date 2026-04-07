@@ -31,7 +31,9 @@
             </a>
             <a th:href="@{/orders(status='DELIVERED')}"
                class="btn btn-sm rounded-pill px-3"
-               th:classappend="${currentStatus == 'DELIVERED' ? 'btn-pink text-white' : 'btn-outline-secondary'}">
+               th:classappend="${currentStatus == 'DELIVERED' or currentStatus == 'COMPLETED'}
+                    ? 'btn-pink text-white'
+                    : 'btn-outline-secondary'">
                 Hoàn thành
             </a>
             <a th:href="@{/orders(status='FAILED')}"

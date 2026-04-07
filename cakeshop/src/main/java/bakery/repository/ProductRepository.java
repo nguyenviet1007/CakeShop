@@ -29,6 +29,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByCategory(String category, Pageable pageable);
 
     Page<Product> findByNameContainingIgnoreCaseAndCategory(String name, String category, Pageable pageable);
+    Page<Product> findByCategoryIgnoreCaseAndIsVisibleTrue(String category, Pageable pageable);
 
     // ===== FETCH WITH IMAGES (FIX LỖI Ở ĐÂY) =====
     @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.images WHERE p.productId = :id")

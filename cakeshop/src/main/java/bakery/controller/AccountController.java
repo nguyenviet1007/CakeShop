@@ -62,8 +62,20 @@ public class AccountController {
 
         if (status == null || status.isEmpty()) {
             orderPage = orderRepository.findByUserId(user.getId(), pageable);
+
+        } else if ("DELIVERED".equals(status)) {
+            orderPage = orderRepository.findByUserIdAndStatusIn(
+                    user.getId(),
+                    List.of("DELIVERED", "COMPLETED"),
+                    pageable
+            );
+
         } else {
-            orderPage = orderRepository.findByUserIdAndStatus(user.getId(), status, pageable);
+            orderPage = orderRepository.findByUserIdAndStatus(
+                    user.getId(),
+                    status,
+                    pageable
+            );
         }
 
         model.addAttribute("orders", orderPage.getContent());

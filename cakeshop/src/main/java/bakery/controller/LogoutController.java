@@ -21,11 +21,11 @@ public class LogoutController {
                 SecurityContextHolder.getContext().getAuthentication();
 
         if (auth != null) {
-            // 🔥 Logout Spring Security
+            // Logout Spring Security
             new SecurityContextLogoutHandler().logout(request, response, auth);
         }
 
-        // 🔥 Xóa session thủ công (user bạn lưu)
+        // Xóa session thủ công (user bạn lưu)
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();

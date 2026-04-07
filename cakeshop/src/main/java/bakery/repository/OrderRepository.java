@@ -21,6 +21,7 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     Page<Order> findByUserId(Long userId, Pageable pageable);
     Page<Order> findByUserIdAndStatus(Long userId, String status, Pageable pageable);
+    Page<Order> findByUserIdAndStatusIn(Long userId, List<String> statuses, Pageable pageable);
     @Query("SELECT COUNT(od) > 0 FROM OrderDetail od " +
             "WHERE od.order.user.id = :userId " +
             "AND od.product.productId = :productId " +

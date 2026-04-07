@@ -247,7 +247,7 @@
                 <td th:text="${o.deliveryAddress}"></td>
 
                 <td>
-                    <div th:if="${o.status == 'DELIVERED'}">
+                    <div th:if="${o.status == 'DELIVERED' || o.status == 'COMPLETED'}">
                             <span style="font-weight: 600; color: #16a34a;"
                                   th:text="${#numbers.formatDecimal((o.deliveredFee != null ? o.deliveredFee : 0), 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
                         <div class="fee-note">Phí lúc hoàn thành</div>
@@ -262,6 +262,7 @@
 
                 <td>
                     <span th:if="${o.status == 'DELIVERED'}" class="badge delivered">✔ Đã giao</span>
+                    <span th:if="${o.status == 'COMPLETED'}" class="badge delivered">✔ Đã giao</span>
                     <span th:if="${o.status == 'FAILED'}" class="badge failed">✖ Thất bại</span>
                 </td>
 

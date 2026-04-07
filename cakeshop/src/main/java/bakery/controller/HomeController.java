@@ -99,17 +99,47 @@ public class HomeController {
 //    }
 
     @GetMapping("/category/{categoryName}")
-    public String getProductsByCategory(@PathVariable("categoryName") String categoryName, Model model) {
-        // Vẫn phải truyền danh sách categories để load thanh Menu
-        model.addAttribute("categories", productRepository.findDistinctCategories());
+    public String getProductsByCategory(@PathVariable("categoryName") String categoryName,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        HttpSession session,
+                                        Model model) {
+        try {
+            int size = 8;
+            Pageable pageable = PageRequest.of(page, size);
 
-        // Lấy danh sách sản phẩm thuộc category này
-        model.addAttribute("products", productRepository.findByCategoryIgnoreCase(categoryName));
+            // 1. Lấy danh sách danh mục để hiện navbar
+            model.addAttribute("categories", productRepository.findDistinctCategories());
 
-        // Truyền tên category hiện tại ra để đổi Title "BEST SELLING" thành tên Category
-        model.addAttribute("currentCategoryName", categoryName.toUpperCase());
+            // 2. Lấy sản phẩm theo category có PHÂN TRANG
+            Page<Product> productPage = productRepository.findByCategoryIgnoreCaseAndIsVisibleTrue(categoryName, pageable);
+            List<Product> products = productPage.getContent();
 
-        return "Home";
+            // 3. Kiểm tra trạng thái "Yêu thích" (Copy logic từ index qua)
+            User user = (User) session.getAttribute("user");
+            if (user != null) {
+                for (Product product : products) {
+                    boolean isLiked = favoriteRepository.existsByUserAndProduct(user, product);
+                    product.setIsFavorited(isLiked);
+                }
+            }
+
+            // 4. Đưa dữ liệu ra view
+            model.addAttribute("products", products);
+            model.addAttribute("currentCategoryName", categoryName.toUpperCase());
+
+            // Dữ liệu phân trang
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", productPage.getTotalPages());
+
+            // Để view biết đang ở chế độ xem category nhằm tạo Link phân trang đúng
+            model.addAttribute("isCategoryView", true);
+            model.addAttribute("catName", categoryName);
+
+            return "Home";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
     }
 
     @GetMapping("/product/{id}/fragment")

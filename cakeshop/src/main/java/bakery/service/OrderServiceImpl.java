@@ -41,6 +41,7 @@ public class OrderServiceImpl implements  OrderService {
         Order order = new Order();
         order.setUser(user);
         order.setOrderDate(LocalDateTime.now());
+        order.setDeliveryAddress(user.getAddress());
 
         // Thiết lập trạng thái dựa trên phương thức thanh toán
         if ("COD".equals(paymentMethod)) {
